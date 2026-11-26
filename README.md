@@ -82,7 +82,7 @@ Plain GET requests, so they work with a "Website" or "Open URL" action:
 | `sync.py` | Turns screen frames into per-light colours |
 | `screen.py` | Windows screen sampler (ctypes GDI) |
 | `screen_agent.py` | Streams screen frames from a PC to a remote server |
-| `index.html`, `m.html`, `static/` | Desktop UI, phone UI, PWA files |
+| `index.html`, `static/` | The app (one responsive page for desktop and phone; live via server-sent events), PWA files |
 
 ## Govee LAN protocol notes
 

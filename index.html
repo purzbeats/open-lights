@@ -299,7 +299,7 @@
     .shead { padding-top:10px; }
     .lrow { grid-template-columns:34px 1fr 1fr; }
     .lrow .gm { grid-column:2 / -1; }
-    .map { aspect-ratio:1.15; min-height:0; }
+    .vt, .chip.arr, .map, .desk { display:none !important; }   /* room map and screen setup are desktop-only */
     .scr { grid-template-columns:1fr; }
     .scrl { flex-direction:row; flex-wrap:wrap; max-height:none; }
     .scrl h4 { display:none; }
@@ -399,6 +399,8 @@ let S = { devices:[], modes:null };
 let EFFECTS = [], ZONES = [], INFO = {};
 const pend = {};             // id -> { until, status, top }: what we just asked for, shown until the server agrees
 let view = "home";
+const PHONE = matchMedia("(max-width: 820px)");
+PHONE.addEventListener("change", () => render());
 
 Promise.all([
   fetch("/api/effects").then(r => r.json()).then(e => { EFFECTS = e; }),
@@ -683,7 +685,7 @@ function updateRoom(sec, r, list) {
   $(".rpw", sec).classList.toggle("on", on.length > 0);
   const avg = on.length ? Math.round(on.reduce((a, d) => a + (d.status.brightness ?? 100), 0) / on.length) : 0;
   sec._sl.set(avg, on.length ? `${avg}%` : "Off");
-  const mode = localStorage.getItem("lights.view." + r) || (list.some(d => d.pos) ? "map" : "tiles");
+  const mode = PHONE.matches ? "tiles" : localStorage.getItem("lights.view." + r) || (list.some(d => d.pos) ? "map" : "tiles");
   sec.querySelectorAll(".vt button").forEach(b => b.classList.toggle("on", b.dataset.m === mode));
   $(".arr", sec).hidden = mode !== "map";
   $(".tiles", sec).hidden = mode === "map";
@@ -1110,7 +1112,7 @@ function renderSettings() {
       <h1 class="page">Settings</h1><p class="sub" id="setSub"></p>
       <div class="card"><div class="ch"><h2>Lights</h2><span class="sp"></span><button class="btn" id="scan">Scan for lights</button></div><div id="lrows"></div>
         <p class="help"><b>Govee scenes</b> makes effects on that light use Govee's built-in animations instead of streaming. Screen sync always streams.</p></div>
-      <div class="card"><div class="ch"><h2>Screen sync</h2><span class="sp"></span><small>Pick a light, then the part of the screen it should follow in Watching.</small></div><div id="scrPick"></div></div>
+      <div class="card desk"><div class="ch"><h2>Screen sync</h2><span class="sp"></span><small>Pick a light, then the part of the screen it should follow in Watching.</small></div><div id="scrPick"></div></div>
       <div class="card"><div class="ch"><h2>About</h2></div><p class="help" style="margin:0"><a href="https://github.com/purzbeats/open-lights" style="color:inherit">open-lights</a> · local control for Govee lights, no cloud needed for lights with LAN Control.</p></div></div>`;
     $("#scan").onclick = async e => {
       const b = e.target; b.textContent = "Scanning…"; b.disabled = true;

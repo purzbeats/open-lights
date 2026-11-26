@@ -12,3 +12,8 @@ modes.json
 
 __pycache__/
 *.pyc
+
+# internal dev notes
+CLAUDE.md
+CLAUDE.local.md
+.claude/

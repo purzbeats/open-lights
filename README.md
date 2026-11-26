@@ -5,7 +5,7 @@ Local control for Govee lights, without the Govee app. It's one Python server wi
 - **Fast LAN control:** power, brightness, colour and white temperature in about 50 ms. Lights that don't support LAN control fall back to the Govee cloud API.
 - **Rooms and group controls**, plus soft fades on everything: no white flashes and no hard cuts.
 - **Effects** streamed at 50 fps to segmented lights, such as the H60B2 floor lamp (3 segments) and the H6046 TV bars (10). For lights you'd rather keep on Govee's own animations, each effect maps to a matching built-in Govee scene.
-- **Modes, a weekly schedule and overrides.** Any setup can be captured as a mode. A manual override lasts until the next scheduled change.
+- **Modes, a weekly schedule and overrides.** Any setup can be captured as a mode. A manual override lasts until the next scheduled change. Schedule times and modes can fade slowly, e.g. easing into work light over 30 minutes or dimming to off over 20.
 - **Watching (screen sync):** the lights follow your monitor. Each light samples its own spot on the screen based on where it sits in the room.
 - **Phone app:** an installable web app at `/m`.
 - **Stream Deck and automation hooks:** plain GET URLs for cycling or toggling modes.

@@ -30,6 +30,15 @@ DEFAULT_MODES = [
 DEFAULT_CYCLE = ["office", "chill", "off"]
 
 
+def _fade(v):
+    """A fade length in whole seconds (up to 2 hours), or None for the normal quick crossfade."""
+    try:
+        v = int(v or 0)
+    except (TypeError, ValueError):
+        return None
+    return min(v, 7200) if v >= 5 else None
+
+
 def _copy(x):
     return json.loads(json.dumps(x))
 
@@ -57,17 +66,19 @@ class Modes:
 
     # ---------- applying ----------
 
-    def apply(self, mid, reason):
+    def apply(self, mid, reason, fade=None):
+        """fade: seconds to crossfade into the mode (a schedule entry's fade, else the mode's own, else quick)."""
         m = self.mode(mid)
         if not m:
             return False
-        print(f"mode: {m['name']} ({reason})", flush=True)
+        fade = fade or m.get("fade")
+        print(f"mode: {m['name']} ({reason}{f', {fade // 60} min fade' if fade and fade >= 60 else ''})", flush=True)
         with self.lock:
             self.data["state"]["active"] = mid
             self.save()
         for step in m["steps"]:
             try:
-                self.run_step(step)
+                self.run_step(step, fade)
             except Exception as e:                       # one bad step shouldn't abort the rest
                 print(f"mode: step {step} failed: {e}", flush=True)
         return True
@@ -143,7 +154,7 @@ class Modes:
                 return
             st["last_key"] = self._key(cur)
             self.save()
-        self.apply(cur[1]["mode"], f"schedule {cur[1]['time']}")
+        self.apply(cur[1]["mode"], f"schedule {cur[1]['time']}", cur[1].get("fade"))
 
     # ---------- controls ----------
 
@@ -236,6 +247,19 @@ class Modes:
             self.save()
         return mid
 
+    def set_fade(self, mid, seconds):
+        with self.lock:
+            m = self.mode(mid)
+            if not m:
+                return False
+            fade = _fade(seconds)
+            if fade:
+                m["fade"] = fade
+            else:
+                m.pop("fade", None)
+            self.save()
+        return True
+
     def delete(self, mid):
         with self.lock:
             self.data["modes"] = [m for m in self.data["modes"] if m["id"] != mid]
@@ -247,7 +271,11 @@ class Modes:
         for e in entries or []:
             days = sorted({int(d) for d in e.get("days", []) if 0 <= int(d) <= 6})
             if days and re.fullmatch(r"\d{1,2}:\d{2}", str(e.get("time", ""))) and self.mode(e.get("mode")):
-                clean.append({"days": days, "time": e["time"], "mode": e["mode"]})
+                entry = {"days": days, "time": e["time"], "mode": e["mode"]}
+                fade = _fade(e.get("fade"))
+                if fade:
+                    entry["fade"] = fade
+                clean.append(entry)
         clean.sort(key=lambda e: tuple(int(x) for x in e["time"].split(":")))
         with self.lock:
             was = self.data["schedule"].get("enabled")
@@ -263,7 +291,8 @@ class Modes:
             cur, nxt = self.scheduled_at(now), self.next_change(now)
             st = self.data["state"]
             return {
-                "modes": [{"id": m["id"], "name": m["name"], "scope": m.get("scope"), "steps": m.get("steps", [])}
+                "modes": [{"id": m["id"], "name": m["name"], "scope": m.get("scope"), "steps": m.get("steps", []),
+                           "fade": m.get("fade")}
                           for m in self.data["modes"]],
                 "active": st.get("active"),
                 "override": st.get("override"),

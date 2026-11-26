@@ -450,9 +450,17 @@ class Fader:
             job = self.jobs.get((dev_id, ch))
         return self.value(job, ease((time.time() - job["start"]) / job["dur"])) if job else None
 
-    def start(self, dev_id, ch, frm, to, dur, done=None):
+    def start(self, dev_id, ch, frm, to, dur, done=None, tag=None):
         with self.lock:
-            self.jobs[(dev_id, ch)] = dict(frm=frm, to=to, start=time.time(), dur=max(dur, 0.05), done=done, last=None)
+            self.jobs[(dev_id, ch)] = dict(frm=frm, to=to, start=time.time(), dur=max(dur, 0.05), done=done, last=None, tag=tag)
+
+    def info(self, dev_id):
+        """A long power fade in progress ('on' / 'off'), for the UI: {tag, left (seconds)}."""
+        with self.lock:
+            job = self.jobs.get((dev_id, "bri"))
+        if not job or not job.get("tag") or job["dur"] < 10:
+            return None
+        return {"tag": job["tag"], "left": max(0, int(job["start"] + job["dur"] - time.time()))}
 
     def cancel(self, dev_id, ch):
         with self.lock:
@@ -912,7 +920,7 @@ def apply(dev_id, body):
             if fade and not was_on:
                 lan_send(dev_id, "brightness", {"value": 1})
                 lan_send(dev_id, "turn", {"value": 1})
-                fader.start(dev_id, "bri", 1, target, fade,
+                fader.start(dev_id, "bri", 1, target, fade, tag="on",
                             done=lambda: (confirm_later(dev_id, "power", 1), confirm_later(dev_id, "brightness", target)))
                 with lock:
                     st["brightness"] = target
@@ -928,7 +936,7 @@ def apply(dev_id, body):
                 engine.quiet_stop([dev_id])
             if fade and was_on:
                 cur = fader.current(dev_id, "bri") or prev.get("brightness") or 100
-                fader.start(dev_id, "bri", cur, 1, fade, done=off)
+                fader.start(dev_id, "bri", cur, 1, fade, done=off, tag="off")
             else:
                 fader.cancel(dev_id, "bri")
                 off()
@@ -957,11 +965,16 @@ def apply(dev_id, body):
 
 def snapshot():
     with lock:
-        return sorted(
-            ({**d, "effect": engine.active(d["id"]), "stream": bool(segments_of(d)),
-              "zone": d.get("screen_zone") or DEFAULT_ZONES.get(d.get("sku"), "all")} for d in devices.values()),
-            key=lambda d: (not d.get("online"), (d.get("name") or "").lower()),
-        )
+        out = []
+        for d in devices.values():
+            st = dict(d.get("status") or {})
+            bri = fader.current(d["id"], "bri") if fader else None
+            if bri is not None:                          # mid-fade: report where the brightness is now
+                st["brightness"] = max(1, min(100, int(bri)))
+            out.append({**d, "status": st, "effect": engine.active(d["id"]), "stream": bool(segments_of(d)),
+                        "zone": d.get("screen_zone") or DEFAULT_ZONES.get(d.get("sku"), "all"),
+                        "fading": fader.info(d["id"]) if fader else None})
+        return sorted(out, key=lambda d: (not d.get("online"), (d.get("name") or "").lower()))
 
 
 # ---------- http ----------
@@ -993,11 +1006,12 @@ def run_action(ids, body):
     return all([apply(i, body) for i in ids]) if ids else False
 
 
-def run_step(step):
+def run_step(step, fade=None):
+    """One mode step. fade: the mode's / schedule entry's fade (seconds); a step's own fade wins."""
     with lock:
         ids = [i for i in step["ids"] if i in devices] if "ids" in step else None
     body = dict(step["body"])
-    body.setdefault("fade", MODE_FADE)                  # modes and the schedule always crossfade
+    body.setdefault("fade", fade or MODE_FADE)          # modes and the schedule always crossfade
     run_action(ids if ids is not None else resolve(step.get("target", "all")), body)
 
 
@@ -1176,6 +1190,8 @@ class Handler(BaseHTTPRequestHandler):
             elif op == "delete":
                 modes.delete(mid)
                 ok = True
+            elif op == "fade":
+                ok = modes.set_fade(mid, body.get("fade"))
             else:
                 ok = False
             return self._json(modes.status(), 200 if ok else 400)

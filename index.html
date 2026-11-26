@@ -466,10 +466,15 @@ function glow(d) {
   if (st.color && st.color.r + st.color.g + st.color.b > 40) return [st.color.r, st.color.g, st.color.b];
   return d.effect ? unhex((FXP[d.effect] || ["#ffb070"])[1] || "#ffb070") : d.scene ? [255, 154, 60] : [200, 200, 200];
 }
-const isOn = d => !!(d.online && d.status?.onOff);
+const isOn = d => !!(d.online && (d.status?.onOff || d.fading?.tag === "off"));
+const mins = sec => sec < 60 ? "under a minute" : `${Math.ceil(sec / 60)} min`;
+const FADES = [[0, "Quick"], [60, "1 min fade"], [300, "5 min fade"], [600, "10 min fade"], [1200, "20 min fade"], [1800, "30 min fade"], [3600, "1 hour fade"]];
+const fadeOptions = cur => FADES.map(([v, l]) => `<option value="${v}"${v === (cur || 0) ? " selected" : ""}>${l}</option>`).join("")
+  + (cur && !FADES.some(([v]) => v === cur) ? `<option value="${cur}" selected>${mins(cur)} fade</option>` : "");
 function stateText(d) {
   if (!d.online) return "Offline";
   const st = d.status || {};
+  if (d.fading) return `${d.fading.tag === "off" ? "Fading out" : "Fading in"} · ${st.brightness ?? 0}% · ${mins(d.fading.left)}`;
   if (!st.onOff) return "Off";
   const b = `${st.brightness ?? 100}%`;
   if (d.effect) return `${fxName(d.effect)} · ${b}`;
@@ -694,7 +699,7 @@ function updateRoom(sec, r, list) {
   sec._sl.set(avg, on.length ? `${avg}%` : "Off");
   const rc = on.length ? on.map(glow).reduce((a, b) => a.map((v, i) => v + b[i])).map(v => v / on.length) : null;
   $(".rsl", sec).style.setProperty("--sc", rc ? `rgb(${rc.map(v => Math.round(v * 0.55 + 232 * 0.45))})` : "#3a3e4a");
-  const mode = PHONE.matches ? "tiles" : localStorage.getItem("lights.view." + r) || (list.some(d => d.pos) ? "map" : "tiles");
+  const mode = PHONE.matches ? "tiles" : localStorage.getItem("lights.view." + r) || "tiles";
   sec.querySelectorAll(".vt button").forEach(b => b.classList.toggle("on", b.dataset.m === mode));
   $(".arr", sec).hidden = mode !== "map";
   $(".tiles", sec).hidden = mode === "map";
@@ -1063,10 +1068,13 @@ function renderSchedule() {
     $("#mrows")._k = mk;
     $("#newScope").innerHTML = scopeOptions("room:" + (roomsOf()[0]?.[0] || ""));
     $("#mrows").innerHTML = M.modes.map(m => `<div class="mrow" data-id="${esc(m.id)}"><span class="sw" style="--mg:${modeGrad(m)}"></span><span class="nm">${esc(m.name)}</span>
+      <select class="in mfd" title="How long this mode takes to fade in when you pick it (a schedule time can set its own)">${fadeOptions(m.fade)}</select>
       <select class="in scope">${scopeOptions(m.scope || "all")}</select><button class="btn cap">Save current lights</button><button class="btn ghost del">Delete</button></div>`).join("");
     $("#mrows").querySelectorAll(".mrow").forEach(row => {
       const id = row.dataset.id;
       $(".cap", row).onclick = () => post(`/api/modes/${encodeURIComponent(id)}/capture`, { scope:$(".scope", row).value }).then(() => toast(`Saved the lights into “${modeName(id)}”`));
+      $(".mfd", row).onchange = ev => post(`/api/modes/${encodeURIComponent(id)}/fade`, { fade:+ev.target.value })
+        .then(() => toast(+ev.target.value ? `“${modeName(id)}” now fades in over ${mins(+ev.target.value)}` : `“${modeName(id)}” switches quickly`));
       const del = $(".del", row);
       del.onclick = () => {
         if (del.dataset.armed) return post(`/api/modes/${encodeURIComponent(id)}/delete`).then(() => toast(`Deleted “${modeName(id)}”`));
@@ -1099,11 +1107,13 @@ function drawEntries() {
     const e = draft[idx];
     const row = document.createElement("div");
     row.className = "entry";
-    row.innerHTML = `<input type="time" class="in" value="${esc(e.time)}"><select class="in" style="flex:1;min-width:130px">${M.modes.map(m => `<option value="${esc(m.id)}"${m.id === e.mode ? " selected" : ""}>${esc(m.name)}</option>`).join("")}</select>
+    row.innerHTML = `<input type="time" class="in" value="${esc(e.time)}"><select class="in em" style="flex:1;min-width:130px">${M.modes.map(m => `<option value="${esc(m.id)}"${m.id === e.mode ? " selected" : ""}>${esc(m.name)}</option>`).join("")}</select>
+      <select class="in fd" title="How long the lights take to change into this mode">${fadeOptions(e.fade)}</select>
       <div class="days">${["M", "T", "W", "T", "F", "S", "S"].map((n, i) => `<button class="${e.days.includes(i) ? "on" : ""}" data-d="${i}">${n}</button>`).join("")}</div>
       <button class="x" aria-label="Remove"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>`;
     $("input", row).onchange = ev => { e.time = ev.target.value; markDirty(); };
-    $("select", row).onchange = ev => { e.mode = ev.target.value; markDirty(); };
+    $(".em", row).onchange = ev => { e.mode = ev.target.value; markDirty(); };
+    $(".fd", row).onchange = ev => { const v = +ev.target.value; if (v) e.fade = v; else delete e.fade; markDirty(); };
     row.querySelectorAll(".days button").forEach(b => b.onclick = () => {
       const d = +b.dataset.d; e.days = e.days.includes(d) ? e.days.filter(x => x !== d) : [...e.days, d].sort(); b.classList.toggle("on"); markDirty();
     });

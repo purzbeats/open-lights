@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lights</title>
+<style>
+  :root { --bg:#0d0e12; --card:#16181f; --line:#262a35; --text:#eceef3; --dim:#8a8fa1; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:15px/1.4 system-ui,"Segoe UI",sans-serif; background:var(--bg); color:var(--text); }
+  header { display:flex; align-items:center; gap:10px; padding:18px 24px; border-bottom:1px solid var(--line); flex-wrap:wrap; }
+  h1 { font-size:20px; margin:0 auto 0 0; letter-spacing:.2px; }
+  .count { color:var(--dim); font-size:13px; font-weight:400; margin-left:8px; }
+  button { font:inherit; color:var(--text); background:#21242e; border:1px solid var(--line); border-radius:8px; padding:7px 14px; cursor:pointer; }
+  button:hover { background:#2a2e3a; }
+  .all { display:flex; align-items:center; gap:14px; padding:14px 24px; border-bottom:1px solid var(--line); flex-wrap:wrap; background:#111319; }
+  .all .lbl { color:var(--dim); font-size:13px; }
+  .all input[type=range] { width:160px; }
+  main { padding:8px 24px 40px; }
+  .room { margin-top:22px; }
+  .room-head { display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:0 2px 12px; }
+  .room-head h2 { font-size:17px; margin:0 6px 0 0; }
+  .room-head .n { color:var(--dim); font-size:13px; font-weight:400; margin-left:6px; }
+  .room-head input[type=range] { width:140px; }
+  .grid { display:grid; gap:16px; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); }
+  .roomin { flex:1; background:#1d2029; border:1px solid var(--line); border-radius:6px; color:var(--text); font:inherit; font-size:13px; padding:3px 8px; }
+  .card { --glow:#555; background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px 18px; position:relative; overflow:hidden; transition:opacity .2s; }
+  .card::before { content:""; position:absolute; inset:0 0 auto 0; height:4px; background:var(--glow); box-shadow:0 0 24px 4px var(--glow); }
+  .card.off::before { background:#2c2f39; box-shadow:none; }
+  .card.offline { opacity:.45; }
+  .card.unconfirmed { border-color:#a33; }
+  .warn { color:#ff7272; }
+  .top { display:flex; align-items:center; gap:10px; }
+  .name { flex:1; min-width:0; background:none; border:1px solid transparent; border-radius:6px; color:var(--text); font:600 16px system-ui,"Segoe UI",sans-serif; padding:3px 4px; margin-left:-5px; }
+  .name:hover { border-color:var(--line); }
+  .name:focus { outline:none; border-color:#4a5063; }
+  .meta { color:var(--dim); font-size:12px; margin:2px 0 12px; }
+  .toggle { position:relative; width:44px; height:24px; flex:none; }
+  .toggle input { opacity:0; width:0; height:0; }
+  .toggle span { position:absolute; inset:0; background:#333744; border-radius:24px; cursor:pointer; transition:.15s; }
+  .toggle span::after { content:""; position:absolute; left:3px; top:3px; width:18px; height:18px; background:#fff; border-radius:50%; transition:.15s; }
+  .toggle input:checked + span { background:var(--glow); }
+  .toggle input:checked + span::after { transform:translateX(20px); }
+  .row { display:flex; align-items:center; gap:10px; margin:8px 0; color:var(--dim); font-size:13px; }
+  .row > span:first-child { width:78px; flex:none; }
+  .row output { width:52px; text-align:right; font-variant-numeric:tabular-nums; }
+  input[type=range] { flex:1; accent-color:#c9ccd6; }
+  input[type=color] { width:40px; height:26px; border:1px solid var(--line); border-radius:6px; background:none; padding:1px; cursor:pointer; }
+  .swatches { display:flex; gap:7px; flex-wrap:wrap; }
+  .sw { width:26px; height:26px; border-radius:50%; border:2px solid #0006; padding:0; cursor:pointer; flex:none; }
+  .sw:hover { transform:scale(1.12); }
+  .sw.k { font-size:9px; color:#222; font-weight:700; }
+  .badge { font-size:11px; font-weight:600; letter-spacing:.3px; padding:2px 7px; border-radius:20px; flex:none; text-transform:uppercase; }
+  .badge.lan { background:#12351f; color:#5fe08a; border:1px solid #1f5a33; }
+  .badge.cloud { background:#3a2a0f; color:#f2b84b; border:1px solid #5f4518; }
+  .legend { color:var(--dim); font-size:13px; display:flex; gap:12px; align-items:center; }
+  .legend b { font-weight:600; }
+  select { font:inherit; font-size:13px; color:var(--text); background:#1d2029; border:1px solid var(--line); border-radius:8px; padding:6px 8px; }
+  .modesel { flex:1; min-width:0; }
+  .fxtag { font-size:11px; color:#c9a7ff; margin-left:4px; }
+  .modes { display:flex; align-items:center; gap:10px; padding:14px 24px; border-bottom:1px solid var(--line); flex-wrap:wrap; background:#101218; }
+  .modes .lbl, .all .lbl { color:var(--dim); font-size:13px; }
+  .pills { display:flex; gap:8px; flex-wrap:wrap; }
+  .pill { border-radius:20px; padding:7px 16px; }
+  .pill.active { background:#e8e9ee; color:#111; border-color:#e8e9ee; font-weight:600; }
+  .mstatus { color:var(--dim); font-size:13px; margin-right:auto; }
+  .mstatus.ov { color:#f2b84b; }
+  .panel { margin:0 24px; padding:18px 20px; border:1px solid var(--line); border-top:none; border-radius:0 0 14px 14px; background:#121419; }
+  .panel h3 { font-size:14px; margin:18px 0 10px; color:var(--text); }
+  .panel h3:first-child { margin-top:0; }
+  .panel .hint { color:var(--dim); font-size:12.5px; margin:8px 0 0; max-width:760px; }
+  .srow, .mrow { display:flex; align-items:center; gap:8px; margin:6px 0; flex-wrap:wrap; }
+  .day { padding:4px 0; width:38px; font-size:12px; border-radius:6px; }
+  .day.on { background:#2f4a7a; border-color:#3f63a3; }
+  input[type=time], .panel input[type=text] { font:inherit; font-size:13px; color:var(--text); background:#1d2029; border:1px solid var(--line); border-radius:8px; padding:5px 8px; color-scheme:dark; }
+  .mrow .mname { width:150px; font-weight:600; }
+  .primary { background:#2f4a7a; border-color:#3f63a3; }
+  .x { padding:4px 10px; color:var(--dim); }
+  code { background:#1d2029; padding:2px 6px; border-radius:5px; font-size:12.5px; user-select:all; }
+  .empty { color:var(--dim); grid-column:1/-1; text-align:center; padding:70px 20px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Lights<span class="count" id="count"></span></h1>
+  <span class="legend" id="legend"></span>
+  <button id="scan">Scan for lights</button>
+</header>
+<section class="modes">
+  <span class="lbl">Mode</span>
+  <div class="pills" id="modeBtns"></div>
+  <span class="mstatus" id="modeStatus"></span>
+  <button id="resumeBtn" hidden>Resume schedule</button>
+  <button id="panelBtn">Modes &amp; schedule</button>
+</section>
+<section class="panel" id="panel" hidden></section>
+<section class="all" id="allBar"><span class="lbl">All lights</span></section>
+<main id="rooms"><div class="empty">Looking for lights…</div></main>
+<datalist id="roomlist"></datalist>
+
+<script>
+const SWATCHES = [
+  { hex:"#ff0000" }, { hex:"#00d040" }, { hex:"#0050ff" }, { hex:"#ffaa00" },
+  { hex:"#9a00ff" }, { hex:"#ff2fa8" }, { hex:"#00e0d0" },
+  { k:2700, label:"2.7K" }, { k:4000, label:"4K" }, { k:6500, label:"6.5K" },
+];
+const cards = new Map();
+let EFFECTS = [];
+let ZONES = [];
+const zonesReady = fetch("/api/zones").then(r => r.json()).then(z => { ZONES = z; });
+const effectsReady = fetch("/api/effects").then(r => r.json()).then(e => { EFFECTS = e; });
+const busy = {};          // id -> timestamp of last local interaction
+const timers = {};
+
+const post = (url, body) => fetch(url, { method:"POST", headers:{ "Content-Type":"application/json" }, body:JSON.stringify(body||{}) });
+const act = (id, body) => { busy[id] = Date.now(); return post(`/api/devices/${encodeURIComponent(id)}`, body); };
+
+function throttle(key, fn, ms = 140) {
+  const t = timers[key] ||= { last:0, pending:null };
+  clearTimeout(t.pending);
+  t.pending = setTimeout(() => { t.last = Date.now(); fn(); }, Math.max(0, t.last + ms - Date.now()));
+}
+
+const hex2rgb = h => ({ r:parseInt(h.slice(1,3),16), g:parseInt(h.slice(3,5),16), b:parseInt(h.slice(5,7),16) });
+const rgb2hex = ({r,g,b}) => "#" + [r,g,b].map(v => v.toString(16).padStart(2,"0")).join("");
+function k2rgb(k) {
+  k /= 100; let r, g, b;
+  if (k <= 66) { r = 255; g = 99.47*Math.log(k) - 161.12; b = k <= 19 ? 0 : 138.52*Math.log(k-10) - 305.04; }
+  else { r = 329.7*Math.pow(k-60,-0.1332); g = 288.12*Math.pow(k-60,-0.0755); b = 255; }
+  const c = v => Math.max(0, Math.min(255, Math.round(v)));
+  return { r:c(r), g:c(g), b:c(b) };
+}
+const glowOf = st => !st ? "#555" : st.colorTemInKelvin > 0 ? rgb2hex(k2rgb(st.colorTemInKelvin)) : rgb2hex(st.color || {r:85,g:85,b:85});
+
+function swatchButtons(container, onPick) {
+  for (const s of SWATCHES) {
+    const b = document.createElement("button");
+    b.className = "sw" + (s.k ? " k" : "");
+    b.style.background = s.k ? rgb2hex(k2rgb(s.k)) : s.hex;
+    b.title = s.k ? `White ${s.k}K` : s.hex;
+    if (s.k) b.textContent = s.label;
+    b.onclick = () => onPick(s);
+    container.appendChild(b);
+  }
+}
+// fades (seconds): buttons glide, sliders and the color picker stay instant so dragging feels direct
+const FADE = { power:0.8, swatch:0.7, group:1.2, effect:1.5 };
+const pickBody = (s, fade = FADE.swatch) => s.k ? { action:"kelvin", value:s.k, fade } : { action:"color", ...hex2rgb(s.hex), fade };
+
+function makeCard(d) {
+  const el = document.createElement("div");
+  el.className = "card";
+  el.innerHTML = `
+    <div class="top">
+      <input class="name" spellcheck="false"><span class="badge"></span>
+      <label class="toggle"><input type="checkbox" class="pw"><span></span></label>
+    </div>
+    <div class="meta"></div>
+    <div class="row"><span>Brightness</span><input type="range" class="br" min="1" max="100"><output class="brv"></output></div>
+    <div class="row"><span>Color</span><input type="color" class="col"></div>
+    <div class="row"><span>White</span><input type="range" class="kel" min="2000" max="9000" step="100"><output class="kv"></output></div>
+    <div class="swatches"></div>
+    <div class="row" style="margin-top:12px"><span>Mode</span><select class="modesel"><option value="">—</option></select></div>
+    <div class="row"><span>Screen</span><select class="zonesel modesel" title="Which part of the screen this light follows in Screen sync"></select></div>
+    <label class="row"><span>Effects</span><input type="checkbox" class="gm"> Govee modes only</label>
+    <div class="row"><span>Room</span><input class="roomin" list="roomlist" placeholder="Unassigned" spellcheck="false"></div>`;
+  const $ = s => el.querySelector(s);
+  const id = d.id;
+  $(".pw").onchange = e => { act(id, { action:"power", on:e.target.checked, fade:FADE.power }); el.classList.toggle("off", !e.target.checked); };
+  $(".br").oninput = e => { $(".brv").value = e.target.value + "%"; busy[id] = Date.now(); throttle(id+"br", () => act(id, { action:"brightness", value:+e.target.value })); };
+  $(".col").oninput = e => { el.style.setProperty("--glow", e.target.value); busy[id] = Date.now(); throttle(id+"c", () => act(id, { action:"color", ...hex2rgb(e.target.value) })); };
+  $(".kel").oninput = e => { $(".kv").value = e.target.value + "K"; el.style.setProperty("--glow", rgb2hex(k2rgb(+e.target.value))); busy[id] = Date.now(); throttle(id+"k", () => act(id, { action:"kelvin", value:+e.target.value })); };
+  $(".name").onchange = e => act(id, { action:"rename", name:e.target.value });
+  $(".name").onkeydown = e => { if (e.key === "Enter") e.target.blur(); };
+  const mode = $(".modesel");
+  let scenesLoaded = false;
+  const fillModes = async () => {
+    await effectsReady;
+    const cur = mode.value;
+    let html = `<option value="">—</option>` + (el._gm ? "" : `<optgroup label="Effects">`
+      + EFFECTS.map(e => `<option value="fx:${e.id}">${e.name}</option>`).join("") + `</optgroup>`);
+    if (scenesLoaded) {
+      const scenes = el._scenes || [];
+      if (scenes.length) html += `<optgroup label="Govee scenes">` + scenes.map(n => `<option value="scene:${n.replace(/"/g, "&quot;")}">${n}</option>`).join("") + `</optgroup>`;
+    } else html += `<option value="load" disabled>Govee scenes: loading…</option>`;
+    mode.innerHTML = html; mode.value = cur;
+  };
+  fillModes();
+  el._fillModes = fillModes;
+  $(".gm").onchange = e => { el._gm = e.target.checked; fillModes(); act(id, { action:"govee_modes", on:e.target.checked }); };
+  mode.onfocus = mode.onmousedown = async () => {
+    if (scenesLoaded) return;
+    scenesLoaded = true;
+    try { el._scenes = await (await fetch(`/api/scenes/${encodeURIComponent(id)}`)).json(); } catch { el._scenes = []; }
+    fillModes();
+  };
+  mode.onchange = () => {
+    busy[id] = Date.now();
+    const v = mode.value;
+    if (!v) return act(id, { action:"stop", fade:FADE.effect });
+    if (v.startsWith("fx:")) return act(id, { action:"effect", effect:v.slice(3), fade:FADE.effect });
+    if (v.startsWith("scene:")) return act(id, { action:"scene", name:v.slice(6) });
+  };
+  const zsel = $(".zonesel");
+  zonesReady.then(() => { zsel.innerHTML = ZONES.map(z => `<option value="${z.id}">${z.name}</option>`).join(""); zsel.value = d.zone || "all"; });
+  zsel.onchange = () => { busy[id] = Date.now(); act(id, { action:"screen_zone", zone:zsel.value }); };
+  $(".roomin").onchange = e => act(id, { action:"room", room:e.target.value }).then(refresh);
+  $(".roomin").onkeydown = e => { if (e.key === "Enter") e.target.blur(); };
+  swatchButtons($(".swatches"), s => {
+    act(id, pickBody(s));
+    el.style.setProperty("--glow", s.k ? rgb2hex(k2rgb(s.k)) : s.hex);
+    el.classList.remove("off"); $(".pw").checked = true;
+  });
+  return el;
+}
+
+function update(el, d) {
+  const $ = s => el.querySelector(s);
+  const st = d.status;
+  el.classList.toggle("offline", !d.online);
+  const cloud = d.via === "cloud";
+  const b = $(".badge");
+  b.className = "badge " + (cloud ? "cloud" : "lan");
+  b.textContent = cloud ? "Cloud" : "Local";
+  b.title = cloud ? "No LAN Control: goes through Govee's servers (slower, rate limited)" : "Controlled directly on your network";
+  $(".meta").innerHTML = `${d.sku || "?"}${cloud ? "" : " · " + (d.ip || "no ip")}${d.online ? "" : " · offline"}`
+    + (d.unconfirmed ? ` · <span class="warn">didn't respond to last command</span>` : "");
+  el.classList.toggle("unconfirmed", !!d.unconfirmed);
+  if (d.kelvin) { $(".kel").min = d.kelvin[0]; $(".kel").max = d.kelvin[1]; }
+  if (document.activeElement !== $(".name")) $(".name").value = d.name || d.id;
+  if (document.activeElement !== $(".roomin")) $(".roomin").value = d.room || "";
+  if (document.activeElement !== $(".zonesel") && ZONES.length) $(".zonesel").value = d.zone || "all";
+  if (!!d.govee_modes !== !!el._gm) { el._gm = !!d.govee_modes; $(".gm").checked = el._gm; el._fillModes(); }
+  const mode = $(".modesel");
+  if (document.activeElement !== mode && Date.now() - (busy[d.id] || 0) > 2500) {
+    const want = d.effect ? "fx:" + d.effect : d.scene ? "scene:" + d.scene : "";
+    if (want.startsWith("scene:") && ![...mode.options].some(o => o.value === want)) {
+      mode.insertAdjacentHTML("beforeend", `<option value="${want.replace(/"/g, "&quot;")}">${d.scene}</option>`);
+    }
+    mode.value = want;
+  }
+  if (Date.now() - (busy[d.id] || 0) < 2500 || !st) return;   // don't fight the user's hand
+  el.classList.toggle("off", !st.onOff);
+  el.style.setProperty("--glow", glowOf(st));
+  $(".pw").checked = !!st.onOff;
+  $(".br").value = st.brightness ?? 100; $(".brv").value = (st.brightness ?? 100) + "%";
+  if (st.colorTemInKelvin > 0) { $(".kel").value = st.colorTemInKelvin; $(".kv").value = st.colorTemInKelvin + "K"; }
+  else { $(".kv").value = "—"; if (st.color) $(".col").value = rgb2hex(st.color); }
+}
+
+let lastDevs = [];
+function render(devs) {
+  lastDevs = devs;
+  document.getElementById("count").textContent = devs.length ? `${devs.filter(d => d.online).length} online` : "";
+  const nLan = devs.filter(d => d.via !== "cloud").length, nCloud = devs.length - nLan;
+  document.getElementById("legend").innerHTML = devs.length
+    ? `<span class="badge lan">Local</span><b>${nLan}</b><span class="badge cloud">Cloud</span><b>${nCloud}</b>` : "";
+  const main = document.getElementById("rooms");
+  if (!devs.length) { main.innerHTML = `<div class="empty">No lights found yet. Turn on <b>LAN Control</b> for each light in the Govee app, then hit Scan.</div>`; cards.clear(); sections.clear(); return; }
+  main.querySelector(".empty")?.remove();
+
+  const groups = new Map();
+  for (const d of devs) {
+    const r = d.room || "";
+    if (!groups.has(r)) groups.set(r, []);
+    groups.get(r).push(d);
+  }
+  const names = [...groups.keys()].sort((a, b) => (a === "") - (b === "") || a.localeCompare(b));
+  document.getElementById("roomlist").innerHTML = names.filter(Boolean).map(n => `<option value="${n.replace(/"/g, "&quot;")}">`).join("");
+
+  names.forEach((name, i) => {
+    let sec = sections.get(name);
+    if (!sec) { sec = makeSection(name); sections.set(name, sec); }
+    if (main.children[i] !== sec) main.insertBefore(sec, main.children[i] || null);
+    const list = groups.get(name);
+    sec.querySelector(".n").textContent = `${list.filter(d => d.online).length}/${list.length}`;
+    const g = sec.querySelector(".grid");
+    list.forEach((d, j) => {
+      let el = cards.get(d.id);
+      if (!el) { el = makeCard(d); cards.set(d.id, el); }
+      if (g.children[j] !== el) g.insertBefore(el, g.children[j] || null);
+      update(el, d);
+    });
+  });
+  for (const [name, sec] of sections) if (!groups.has(name)) { sec.remove(); sections.delete(name); }
+}
+
+const sections = new Map();
+function groupControls(container, target) {
+  const url = `/api/devices/${encodeURIComponent(target)}`;
+  const after = () => setTimeout(refresh, 700);
+  const on = document.createElement("button"); on.textContent = "On";
+  const off = document.createElement("button"); off.textContent = "Off";
+  on.onclick = () => post(url, { action:"power", on:true, fade:FADE.group }).then(after);
+  off.onclick = () => post(url, { action:"power", on:false, fade:FADE.group }).then(after);
+  const br = document.createElement("input");
+  Object.assign(br, { type:"range", min:1, max:100, value:100, title:"Brightness" });
+  br.oninput = () => throttle(url + "br", () => post(url, { action:"brightness", value:+br.value }).then(after));
+  const sw = document.createElement("div"); sw.className = "swatches";
+  swatchButtons(sw, s => post(url, pickBody(s, FADE.group)).then(after));
+  const fx = document.createElement("select");
+  fx.title = "Run an effect across these lights";
+  effectsReady.then(() => {
+    fx.innerHTML = `<option value="">Effect…</option>` + EFFECTS.map(e => `<option value="${e.id}">${e.name}</option>`).join("");
+  });
+  fx.onchange = () => { if (fx.value) post(url, { action:"effect", effect:fx.value, fade:FADE.effect }).then(after); fx.value = ""; };
+  const stop = document.createElement("button"); stop.textContent = "Stop";
+  stop.title = "Stop effects and go back to what the lights were doing";
+  stop.onclick = () => post(url, { action:"stop", fade:FADE.effect }).then(after);
+  container.append(on, off, br, sw, fx, stop);
+}
+function makeSection(name) {
+  const sec = document.createElement("section");
+  sec.className = "room";
+  sec.innerHTML = `<div class="room-head"><h2></h2></div><div class="grid"></div>`;
+  const h = sec.querySelector("h2");
+  h.textContent = name || "Unassigned";
+  const n = document.createElement("span"); n.className = "n"; h.appendChild(n);
+  groupControls(sec.querySelector(".room-head"), "room:" + name);
+  return sec;
+}
+
+async function refresh() {
+  try { render(await (await fetch("/api/devices")).json()); } catch {}
+}
+
+document.getElementById("scan").onclick = async e => {
+  e.target.textContent = "Scanning…"; e.target.disabled = true;
+  try { render(await (await post("/api/scan")).json()); } finally { e.target.textContent = "Scan for lights"; e.target.disabled = false; }
+};
+groupControls(document.getElementById("allBar"), "all");
+
+// ================= modes, schedule, override =================
+const $id = x => document.getElementById(x);
+const DAYS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+let M = null;                 // /api/modes status
+let draft = null;             // schedule rows being edited
+const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" })[c]);
+const modeName = id => (M.modes.find(m => m.id === id) || {}).name || id;
+const when = iso => {
+  const d = new Date(iso), today = new Date();
+  const t = d.toLocaleTimeString([], { hour:"numeric", minute:"2-digit" });
+  return d.toDateString() === today.toDateString() ? t : `${d.toLocaleDateString([], { weekday:"short" })} ${t}`;
+};
+
+async function loadModes() {
+  try { M = await (await fetch("/api/modes")).json(); renderModeBar(); } catch {}
+}
+const useStatus = r => r.json().then(s => { M = s; renderModeBar(); if (!$id("panel").hidden) renderPanel(false); });
+
+function renderModeBar() {
+  const box = $id("modeBtns");
+  box.innerHTML = "";
+  for (const m of M.modes) {
+    const b = document.createElement("button");
+    b.className = "pill" + (m.id === M.active ? " active" : "");
+    b.textContent = m.name;
+    b.onclick = () => post(`/api/modes/${encodeURIComponent(m.id)}/activate`).then(useStatus).then(() => setTimeout(refresh, 900));
+    box.appendChild(b);
+  }
+  const st = $id("modeStatus");
+  st.classList.toggle("ov", !!M.override);
+  if (M.override) st.textContent = `Override: ${modeName(M.override.mode)}` + (M.override.until ? ` until ${when(M.override.until)}` : "");
+  else if (M.schedule.enabled) st.textContent = "On schedule" + (M.next ? ` · ${modeName(M.next.mode)} at ${when(M.next.at)}` : "");
+  else st.textContent = "Schedule off";
+  $id("resumeBtn").hidden = !M.override;
+}
+$id("resumeBtn").onclick = () => fetch("/api/mode/resume").then(useStatus).then(() => setTimeout(refresh, 900));
+$id("panelBtn").onclick = () => { const p = $id("panel"); p.hidden = !p.hidden; if (!p.hidden) renderPanel(true); };
+
+function scopes() {
+  const rooms = [...new Set(lastDevs.map(d => d.room).filter(Boolean))].sort();
+  return [["all", "All lights"], ...rooms.map(r => ["room:" + r, r])];
+}
+const scopeSelect = (cls, cur) => `<select class="${cls}">` + scopes().map(([v, l]) => `<option value="${esc(v)}"${v === cur ? " selected" : ""}>${esc(l)}</option>`).join("") + `</select>`;
+
+function renderPanel(fresh) {
+  if (fresh || !draft) draft = JSON.parse(JSON.stringify(M.schedule.entries));
+  const p = $id("panel");
+  p.innerHTML = `
+    <h3>Schedule</h3>
+    <label class="srow"><input type="checkbox" id="schedOn"${M.schedule.enabled ? " checked" : ""}> Run the schedule</label>
+    <div id="srows"></div>
+    <div class="srow"><button id="addRow">+ Add time</button><button id="saveSched" class="primary">Save schedule</button><span id="saved" class="mstatus"></span></div>
+    <p class="hint">Each line switches to a mode at that time on the ticked days, and it stays until the next line.
+      Switching modes by hand (the buttons above or your Stream Deck) overrides the schedule until its next change; <b>Resume schedule</b> ends an override early.</p>
+
+    <h3>Modes</h3>
+    <div id="mrows"></div>
+    <div class="mrow"><input type="text" id="newName" placeholder="New mode name"> ${scopeSelect("newScope", "room:Office")}
+      <button id="newMode">Save current lights as new mode</button></div>
+    <p class="hint">Set the lights how you want them, then <b>Save current lights</b> on a mode: it remembers power, brightness, colour or white, effects and Govee scenes for the lights in the chosen room.</p>
+
+    <h3>Stream Deck</h3>
+    <p class="hint">Add a button that calls one of these in the background (Elgato's <b>Website</b> action with “GET request in background” ticked, or a plugin like API Ninja):</p>
+    <div class="srow"><code>${location.origin}/api/mode/cycle?modes=office,chill,off</code> <span class="mstatus">Office → Chill → Off → …</span></div>
+    <div class="srow"><code>${location.origin}/api/mode/toggle/watching</code> <span class="mstatus">Watching on / back to what was on before</span></div>
+    ${M.modes.map(m => `<div class="srow"><code>${location.origin}/api/mode/${esc(m.id)}</code> <span class="mstatus">${esc(m.name)}</span></div>`).join("")}
+    <div class="srow"><code>${location.origin}/api/mode/resume</code> <span class="mstatus">Resume schedule</span></div>`;
+
+  // schedule rows
+  const srows = $id("srows");
+  const drawRows = () => {
+    srows.innerHTML = "";
+    if (!draft.length) srows.innerHTML = `<div class="mstatus">No times yet.</div>`;
+    draft.forEach((e, idx) => {
+      const row = document.createElement("div");
+      row.className = "srow";
+      row.innerHTML = DAYS.map((d, i) => `<button class="day${e.days.includes(i) ? " on" : ""}" data-d="${i}">${d}</button>`).join("")
+        + `<input type="time" value="${esc(e.time)}">`
+        + `<select>${M.modes.map(m => `<option value="${esc(m.id)}"${m.id === e.mode ? " selected" : ""}>${esc(m.name)}</option>`).join("")}</select>`
+        + `<button class="x" title="Remove">✕</button>`;
+      row.querySelectorAll(".day").forEach(b => b.onclick = () => {
+        const d = +b.dataset.d;
+        e.days = e.days.includes(d) ? e.days.filter(x => x !== d) : [...e.days, d].sort();
+        b.classList.toggle("on");
+      });
+      row.querySelector("input").onchange = ev => e.time = ev.target.value;
+      row.querySelector("select").onchange = ev => e.mode = ev.target.value;
+      row.querySelector(".x").onclick = () => { draft.splice(idx, 1); drawRows(); };
+      srows.appendChild(row);
+    });
+  };
+  drawRows();
+  $id("addRow").onclick = () => { draft.push({ days:[0,1,2,3,4], time:"09:00", mode:M.modes[0]?.id }); drawRows(); };
+  $id("saveSched").onclick = () => post("/api/schedule", { enabled:$id("schedOn").checked, entries:draft })
+    .then(useStatus).then(() => { $id("saved").textContent = "Saved"; setTimeout(refresh, 900); });
+
+  // mode rows
+  const mrows = $id("mrows");
+  for (const m of M.modes) {
+    const row = document.createElement("div");
+    row.className = "mrow";
+    row.innerHTML = `<span class="mname">${esc(m.name)}</span> ${scopeSelect("scope", m.scope || "room:Office")}
+      <button class="cap">Save current lights</button><button class="del x">Delete</button><span class="mstatus msg"></span>`;
+    row.querySelector(".cap").onclick = () => post(`/api/modes/${encodeURIComponent(m.id)}/capture`, { scope:row.querySelector(".scope").value })
+      .then(r => r.json()).then(s => { M = s; row.querySelector(".msg").textContent = "Saved from current lights"; });
+    const del = row.querySelector(".del");
+    del.onclick = () => {
+      if (del.dataset.armed) return post(`/api/modes/${encodeURIComponent(m.id)}/delete`).then(useStatus).then(() => renderPanel(true));
+      del.dataset.armed = 1; del.textContent = "Really delete?";
+      setTimeout(() => { delete del.dataset.armed; del.textContent = "Delete"; }, 3000);
+    };
+    mrows.appendChild(row);
+  }
+  $id("newMode").onclick = () => {
+    const name = $id("newName").value.trim();
+    if (name) post("/api/modes", { name, scope:p.querySelector(".newScope").value }).then(useStatus).then(() => renderPanel(false));
+  };
+}
+
+loadModes();
+setInterval(() => { if ($id("panel").hidden) loadModes(); else fetch("/api/modes").then(r => r.json()).then(s => { M = s; renderModeBar(); }); }, 4000);
+
+refresh();
+setInterval(refresh, 2500);
+</script>
+</body>
+</html>

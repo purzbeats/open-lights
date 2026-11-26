@@ -1,0 +1,14 @@
+# secrets
+.env
+
+# your lights, rooms, modes and schedule (created on first run)
+devices.json
+modes.json
+*.tmp
+*.bad*
+
+# logs
+*.log
+
+__pycache__/
+*.pyc

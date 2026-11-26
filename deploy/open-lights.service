@@ -1,0 +1,19 @@
+# systemd unit for running the server on a Raspberry Pi (or any Linux box on the same LAN as the lights).
+#   sudo cp deploy/open-lights.service /etc/systemd/system/
+#   (edit User / paths below)
+#   sudo systemctl enable --now open-lights
+#   journalctl -u open-lights -f
+[Unit]
+Description=open-lights (local Govee control)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=pi
+WorkingDirectory=/home/pi/open-lights
+ExecStart=/usr/bin/python3 -I -u /home/pi/open-lights/server.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

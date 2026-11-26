@@ -45,7 +45,7 @@ CLOUD_STATUS_EVERY, CLOUD_LIST_EVERY = 120, 600   # cloud API is rate limited pe
 
 lock = threading.RLock()
 devices = {}  # id -> {id, sku, ip, via: lan|cloud, name, auto_name, kelvin, status, online, last_seen}
-SAVED = ("id", "sku", "ip", "via", "name", "auto_name", "kelvin", "room", "segments", "govee_modes", "bri_restore", "screen_zone")
+SAVED = ("id", "sku", "ip", "via", "name", "auto_name", "kelvin", "room", "segments", "govee_modes", "bri_restore", "screen_zone", "pos")
 # default screen-sync zone by model (everything else: whole screen, ambient)
 DEFAULT_ZONES = {"H6046": "sides"}
 # Lights that accept the fast "razer" stream, and how many segments they have. Others get plain color commands.
@@ -856,6 +856,13 @@ def apply(dev_id, body):
             return True
         if a == "screen_zone":
             dev["screen_zone"] = body.get("zone") if body.get("zone") in ZONE_NAMES else None
+            save()
+            return True
+        if a == "position":                              # where the light sits on its room's map (0..1, 0..1)
+            try:
+                dev["pos"] = [round(min(1.0, max(0.0, float(body["x"]))), 4), round(min(1.0, max(0.0, float(body["y"]))), 4)]
+            except (KeyError, TypeError, ValueError):
+                dev["pos"] = None
             save()
             return True
         if a == "room":

@@ -105,6 +105,55 @@
   .tile.on .bar { opacity:1; }
   .tile .bar i { display:block; height:100%; width:var(--b,0%); background:rgba(var(--cr),.85); transition:width .4s var(--ease); }
 
+  /* ---------- room map ---------- */
+  .vt { display:flex; padding:3px; gap:2px; background:var(--s1); border:1px solid var(--line); border-radius:11px; }
+  .vt button { width:34px; height:28px; border-radius:8px; display:grid; place-items:center; color:var(--dim2); }
+  .vt button.on { background:var(--s3); color:var(--text); }
+  .vt svg { width:17px; height:17px; }
+  .chip.arr.on { background:#e8e9ee; color:#111; border-color:#e8e9ee; }
+  .map { position:relative; border-radius:22px; border:1px solid var(--line); overflow:hidden; aspect-ratio:2.5; min-height:280px;
+    background:radial-gradient(#ffffff0c 1px, transparent 1.2px) 0 0/24px 24px, linear-gradient(180deg,#12141a,#0e1015); }
+  .map.edit { border-color:#ffffff40; }
+  .map.edit::after { content:"Drag each light to where it is in the room"; position:absolute; left:50%; bottom:12px; transform:translateX(-50%);
+    font-size:12.5px; color:var(--dim); background:#0b0c10cc; padding:5px 12px; border-radius:20px; pointer-events:none; white-space:nowrap; }
+  .pool { position:absolute; border-radius:50%; transform:translate(-50%,-50%); pointer-events:none; mix-blend-mode:screen; opacity:0;
+    background:radial-gradient(closest-side, rgba(var(--cr),.8), rgba(var(--cr),.3) 40%, rgba(var(--cr),.08) 70%, transparent); transition:opacity .9s, width .6s var(--ease), height .6s var(--ease), background 1s; }
+  .pool.on { opacity:1; }
+  .node { --c:#888; --cr:136,136,136; position:absolute; transform:translate(-50%,-50%); display:flex; flex-direction:column; align-items:center; gap:7px;
+    cursor:pointer; user-select:none; -webkit-user-select:none; touch-action:manipulation; transition:left .5s var(--ease), top .5s var(--ease); z-index:2; }
+  .node.dragging { transition:none; z-index:3; }
+  .map.edit .node { cursor:grab; touch-action:none; }
+  .node .bulb { width:44px; height:44px; box-shadow:0 0 0 1px #ffffff14; }
+  .node.on .bulb { background:var(--c); box-shadow:0 0 26px rgba(var(--cr),.7); }
+  .node.on .bulb svg { color:#0008; }
+  .node.anim .bulb { background:var(--fx); background-size:200% 200%; animation:drift 6s linear infinite; }
+  .node.offline { opacity:.35; }
+  .node > span:last-child { font-size:12px; font-weight:600; color:#e6e8ee; background:#0b0c10b3; padding:2px 9px; border-radius:20px; white-space:nowrap; max-width:150px; overflow:hidden; text-overflow:ellipsis; }
+  .node:active .bulb { transform:scale(.94); }
+
+  /* ---------- screen zone picker ---------- */
+  .scr { display:grid; grid-template-columns:280px 1fr; gap:22px; align-items:start; }
+  .scrl { display:flex; flex-direction:column; gap:4px; max-height:520px; overflow:auto; }
+  .scrl button { display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:11px; text-align:left; font-size:13.5px; font-weight:600; border:1px solid transparent; }
+  .scrl button:hover { background:var(--s2); }
+  .scrl button.on { background:var(--s2); border-color:var(--line2); }
+  .scrl button i { width:12px; height:12px; border-radius:50%; flex:none; }
+  .scrl button small { margin-left:auto; color:var(--dim2); font-weight:500; font-size:12px; white-space:nowrap; }
+  .scrl h4 { margin:10px 10px 4px; font-size:11.5px; text-transform:uppercase; letter-spacing:.6px; color:var(--dim2); }
+  .scrl h4:first-child { margin-top:0; }
+  .mon { position:relative; aspect-ratio:16/9; border-radius:14px; border:7px solid #23262f; background:linear-gradient(135deg,#191c25,#101218); box-shadow:0 20px 50px #0008; }
+  .stand { width:22%; height:16px; margin:0 auto; background:linear-gradient(#23262f,#1a1c23); clip-path:polygon(30% 0,70% 0,100% 100%,0 100%); }
+  .hs { position:absolute; display:flex; flex-wrap:wrap; align-content:center; justify-content:center; gap:4px; padding:4px; border:1px dashed #ffffff1c;
+    border-radius:8px; cursor:pointer; transition:background .2s, border-color .2s; }
+  .hs:hover { background:#ffffff0d; border-color:#ffffff40; }
+  .hs.sel { background:rgba(var(--sr),.18); border:1.5px solid rgba(var(--sr),.9); }
+  .hs b { width:100%; text-align:center; font-size:10.5px; font-weight:600; color:var(--dim2); text-transform:uppercase; letter-spacing:.5px; }
+  .hs.sel b { color:#fff; }
+  .pill { display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:600; background:#0b0c10c0; padding:2px 8px 2px 4px; border-radius:20px; white-space:nowrap; }
+  .pill i { width:9px; height:9px; border-radius:50%; }
+  .scrx { display:flex; gap:10px; margin-top:16px; flex-wrap:wrap; }
+  .scrx .hs { position:relative; flex:1; min-width:180px; min-height:56px; }
+
   /* ---------- controls ---------- */
   .switch { position:relative; width:50px; height:30px; border-radius:30px; background:var(--s3); flex:none; transition:background .25s; }
   .switch::after { content:""; position:absolute; left:3px; top:3px; width:24px; height:24px; border-radius:50%; background:#fff; transition:transform .25s var(--ease); box-shadow:0 1px 3px #0006; }
@@ -205,7 +254,7 @@
   .mrow .sw { width:30px; height:30px; border-radius:9px; background:var(--mg); flex:none; }
   .mrow .nm { font-weight:600; min-width:140px; flex:1; }
   .msg { color:var(--ok); font-size:12.5px; }
-  .lrow { display:grid; grid-template-columns:38px minmax(140px,1.2fr) minmax(110px,.8fr) minmax(220px,1.2fr) auto; gap:12px; align-items:center; padding:12px 0; border-top:1px solid var(--line); }
+  .lrow { display:grid; grid-template-columns:38px minmax(160px,1.4fr) minmax(120px,1fr) auto; gap:12px; align-items:center; padding:12px 0; border-top:1px solid var(--line); }
   .lrow:first-of-type { border-top:0; }
   .lrow .bulb { width:34px; height:34px; }
   .lrow .meta { grid-column:2 / -1; color:var(--dim2); font-size:12px; margin-top:-6px; display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
@@ -249,8 +298,13 @@
     .grabzone { touch-action:none; }
     .shead { padding-top:10px; }
     .lrow { grid-template-columns:34px 1fr 1fr; }
-    .lrow .zone, .lrow .gm { grid-column:2 / span 1; }
-    .lrow .gm { grid-column:3; }
+    .lrow .gm { grid-column:2 / -1; }
+    .map { aspect-ratio:1.15; min-height:0; }
+    .scr { grid-template-columns:1fr; }
+    .scrl { flex-direction:row; flex-wrap:wrap; max-height:none; }
+    .scrl h4 { display:none; }
+    .scrl button small { display:none; }
+    .hs b { font-size:9px; }
     .days button { width:30px; }
     .card { padding:16px; }
     .week { grid-template-columns:32px 1fr; }
@@ -299,6 +353,8 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const post = (url, body) => fetch(url, { method:"POST", headers:{ "Content-Type":"application/json" }, body:JSON.stringify(body || {}) });
 const buzz = () => navigator.vibrate?.(8);
 const ICON_BULB = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.3 1.1 2.2h5c0-.9.4-1.6 1.1-2.2A6 6 0 0 0 12 3z"/></svg>`;
+const ICON_GRID = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/></svg>`;
+const ICON_MAP = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="14" rx="2.5"/><circle cx="8.5" cy="10" r="1.6" fill="currentColor"/><circle cx="15.5" cy="9" r="1.6" fill="currentColor"/><circle cx="12" cy="15" r="1.6" fill="currentColor"/></svg>`;
 const ICON_MORE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>`;
 
 function k2rgb(k) {
@@ -598,7 +654,11 @@ function makeRoom(r) {
   sec.className = "room"; sec.id = "room-" + r; sec._room = r;
   sec.innerHTML = `<div class="rhead"><h2>${esc(roomLabel(r))}</h2><span class="rm"></span><span class="sp"></span>
     <div class="slider rsl"><div class="fill"></div><span class="lbl"></span></div>
-    <button class="chip rmore">Colors &amp; effects</button><button class="switch rpw" aria-label="Room power"></button></div><div class="tiles"></div>`;
+    <button class="chip arr" hidden>Arrange</button>
+    <div class="vt"><button data-m="tiles" aria-label="Tiles">${ICON_GRID}</button><button data-m="map" aria-label="Room map">${ICON_MAP}</button></div>
+    <button class="chip rmore">Colors &amp; effects</button><button class="switch rpw" aria-label="Room power"></button></div><div class="tiles"></div><div class="map" hidden></div>`;
+  sec.querySelectorAll(".vt button").forEach(b => b.onclick = () => { localStorage.setItem("lights.view." + r, b.dataset.m); $(".map", sec).classList.remove("edit"); setArrange(sec, false); render(); });
+  $(".arr", sec).onclick = () => setArrange(sec, !$(".map", sec).classList.contains("edit"));
   const target = "room:" + r;
   $(".rpw", sec).onclick = () => {
     buzz();
@@ -611,12 +671,24 @@ function makeRoom(r) {
   return sec;
 }
 
+function setArrange(sec, on) {
+  $(".map", sec).classList.toggle("edit", on);
+  $(".arr", sec).classList.toggle("on", on);
+  $(".arr", sec).textContent = on ? "Done" : "Arrange";
+}
+
 function updateRoom(sec, r, list) {
   const on = list.filter(isOn);
   $(".rm", sec).textContent = on.length ? `${on.length} of ${list.length} on` : "All off";
   $(".rpw", sec).classList.toggle("on", on.length > 0);
   const avg = on.length ? Math.round(on.reduce((a, d) => a + (d.status.brightness ?? 100), 0) / on.length) : 0;
   sec._sl.set(avg, on.length ? `${avg}%` : "Off");
+  const mode = localStorage.getItem("lights.view." + r) || (list.some(d => d.pos) ? "map" : "tiles");
+  sec.querySelectorAll(".vt button").forEach(b => b.classList.toggle("on", b.dataset.m === mode));
+  $(".arr", sec).hidden = mode !== "map";
+  $(".tiles", sec).hidden = mode === "map";
+  $(".map", sec).hidden = mode !== "map";
+  if (mode === "map") updateMap($(".map", sec), list);
   const tiles = $(".tiles", sec);
   list.forEach((d, j) => {
     let t = tiles.querySelector(`[data-id="${CSS.escape(d.id)}"]`);
@@ -627,19 +699,89 @@ function updateRoom(sec, r, list) {
   [...tiles.children].forEach(t => { if (!list.some(d => d.id === t.dataset.id)) t.remove(); });
 }
 
+function toggleLight(id) {
+  const d = devById(id);
+  if (!d?.online) return toast(`${d?.name || "That light"} is offline`);
+  buzz();
+  const on = !isOn(d);
+  optimistic(id, { onOff:on ? 1 : 0 });
+  act(id, { action:"power", on, fade:0.8 });
+}
+function lightLook(el, d) {
+  const c = glow(d), on = isOn(d);
+  el.classList.toggle("on", on);
+  el.classList.toggle("offline", !d.online);
+  el.classList.toggle("anim", on && !!(d.effect || d.scene));
+  el.style.setProperty("--c", `rgb(${c})`);
+  el.style.setProperty("--cr", c.join(","));
+  el.style.setProperty("--fx", d.effect ? fxGrad(d.effect) : "linear-gradient(90deg,#ff9a3c,#ff5e62,#ffcf6b,#ff9a3c)");
+}
+function defaultSpots(list) {
+  const free = list.filter(d => !d.pos), spots = {};
+  free.forEach((d, i) => { spots[d.id] = [(i + 1) / (free.length + 1), list.length === free.length ? 0.5 : 0.82]; });
+  return spots;
+}
+function updateMap(map, list) {
+  const spots = defaultSpots(list);
+  for (const d of list) {
+    let n = map.querySelector(`.node[data-id="${CSS.escape(d.id)}"]`), pool;
+    if (!n) {
+      pool = document.createElement("div"); pool.className = "pool"; pool.dataset.id = d.id; map.appendChild(pool);
+      n = makeNode(d.id, map); map.appendChild(n);
+    } else pool = map.querySelector(`.pool[data-id="${CSS.escape(d.id)}"]`);
+    lightLook(n, d); lightLook(pool, d);
+    n.lastElementChild.textContent = d.name || d.id;
+    n.title = stateText(d);
+    const size = 140 + (d.status?.brightness ?? 0) * 2.4;
+    pool.style.width = pool.style.height = `${size}px`;
+    if (!n.classList.contains("dragging")) {
+      const [x, y] = d.pos || spots[d.id];
+      n.style.left = pool.style.left = `${x * 100}%`;
+      n.style.top = pool.style.top = `${y * 100}%`;
+    }
+  }
+  map.querySelectorAll("[data-id]").forEach(el => { if (!list.some(d => d.id === el.dataset.id)) el.remove(); });
+}
+function makeNode(id, map) {
+  const n = document.createElement("div");
+  n.className = "node"; n.dataset.id = id; n.tabIndex = 0; n.setAttribute("role", "button");
+  n.innerHTML = `<span class="bulb">${ICON_BULB}</span><span></span>`;
+  let press, long = false, drag = null;
+  n.addEventListener("pointerdown", e => {
+    long = false;
+    if (map.classList.contains("edit")) {
+      n.setPointerCapture(e.pointerId); n.classList.add("dragging");
+      drag = { pool:map.querySelector(`.pool[data-id="${CSS.escape(id)}"]`), xy:null };
+      return;
+    }
+    press = setTimeout(() => { long = true; buzz(); openSheet(id); }, 480);
+  });
+  n.addEventListener("pointermove", ev => {
+    if (!drag) return;
+    const r = map.getBoundingClientRect();
+    const x = clamp((ev.clientX - r.left) / r.width, 0.04, 0.96), y = clamp((ev.clientY - r.top) / r.height, 0.08, 0.9);
+    n.style.left = drag.pool.style.left = `${x * 100}%`; n.style.top = drag.pool.style.top = `${y * 100}%`; drag.xy = [x, y];
+  });
+  const end = () => {
+    clearTimeout(press);
+    if (!drag) return;
+    const xy = drag.xy; drag = null; n.classList.remove("dragging");
+    if (xy) { optimistic(id, {}, { pos:xy }); act(id, { action:"position", x:xy[0], y:xy[1] }); }
+  };
+  n.addEventListener("pointerup", end); n.addEventListener("pointercancel", end);
+  n.addEventListener("pointerleave", () => { if (!drag) clearTimeout(press); });
+  n.onclick = () => { if (map.classList.contains("edit") || long) return; toggleLight(id); };
+  n.oncontextmenu = e => { e.preventDefault(); clearTimeout(press); if (!long) openSheet(id); };
+  n.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleLight(id); } };
+  return n;
+}
+
 function makeTile(id) {
   const t = document.createElement("div");
   t.className = "tile"; t.dataset.id = id; t.tabIndex = 0; t.setAttribute("role", "button");
   t.innerHTML = `<span class="bulb">${ICON_BULB}</span><div class="tt"><b></b><small></small></div><button class="more" aria-label="Controls">${ICON_MORE}</button><span class="bar"><i></i></span>`;
   let press, long = false;
-  const toggle = () => {
-    const d = devById(id);
-    if (!d?.online) return toast(`${d?.name || "That light"} is offline`);
-    buzz();
-    const on = !isOn(d);
-    optimistic(id, { onOff:on ? 1 : 0 });
-    act(id, { action:"power", on, fade:0.8 });
-  };
+  const toggle = () => toggleLight(id);
   t.onpointerdown = e => { if (e.target.closest(".more")) return; long = false; press = setTimeout(() => { long = true; buzz(); openSheet(id); }, 480); };
   t.onpointerup = t.onpointerleave = t.onpointercancel = () => clearTimeout(press);
   t.onclick = e => { if (e.target.closest(".more")) return openSheet(id); if (long) return; toggle(); };
@@ -967,8 +1109,8 @@ function renderSettings() {
     main.innerHTML = `<div class="view">
       <h1 class="page">Settings</h1><p class="sub" id="setSub"></p>
       <div class="card"><div class="ch"><h2>Lights</h2><span class="sp"></span><button class="btn" id="scan">Scan for lights</button></div><div id="lrows"></div>
-        <p class="help"><b>Screen</b> is the part of your monitor a light follows in screen sync (Watching).
-        <b>Govee scenes</b> makes effects on that light use Govee's built-in animations instead of streaming.</p></div>
+        <p class="help"><b>Govee scenes</b> makes effects on that light use Govee's built-in animations instead of streaming. Screen sync always streams.</p></div>
+      <div class="card"><div class="ch"><h2>Screen sync</h2><span class="sp"></span><small>Pick a light, then the part of the screen it should follow in Watching.</small></div><div id="scrPick"></div></div>
       <div class="card"><div class="ch"><h2>About</h2></div><p class="help" style="margin:0"><a href="https://github.com/purzbeats/open-lights" style="color:inherit">open-lights</a> · local control for Govee lights, no cloud needed for lights with LAN Control.</p></div></div>`;
     $("#scan").onclick = async e => {
       const b = e.target; b.textContent = "Scanning…"; b.disabled = true;
@@ -988,26 +1130,54 @@ function renderSettings() {
     if (box.children[i] !== row) box.insertBefore(row, box.children[i] || null);
     const c = glow(d), on = isOn(d);
     const b = $(".bulb", row); b.style.background = on ? `rgb(${c})` : ""; b.style.boxShadow = on ? `0 0 16px rgba(${c},.5)` : "";
-    const zs = $(".zone", row);
-    if (!zs.options.length && ZONES.length) zs.innerHTML = ZONES.map(z => `<option value="${esc(z.id)}">Screen: ${esc(z.name)}</option>`).join("");
     const setv = (sel, v) => { const el = $(sel, row); if (document.activeElement !== el) el.value = v; };
-    setv(".nm", d.name || d.id); setv(".rm", d.room || ""); setv(".zone", d.zone || "all");
+    setv(".nm", d.name || d.id); setv(".rm", d.room || "");
     $(".gm .switch", row).classList.toggle("on", !!d.govee_modes);
     $(".meta", row).innerHTML = `<span class="badge ${d.via === "cloud" ? "cloud" : "lan"}">${d.via === "cloud" ? "Cloud" : "Local"}</span>${esc(d.sku || "")}${d.ip ? " · " + esc(d.ip) : ""}
       · ${d.online ? (d.unconfirmed ? `<span style="color:var(--red)">not responding</span>` : "online") : "offline"}`;
   });
   [...box.children].forEach(r => { if (!S.devices.some(d => d.id === r.dataset.id)) r.remove(); });
+  renderPicker();
+}
+
+// screen-zone picker: a drawing of the monitor with clickable areas
+const ZSHORT = { all:"Whole screen", center:"Center", left:"Left edge", right:"Right edge", top:"Top edge", bottom:"Bottom edge",
+  sides:"Wrap around", "left-half":"Left half", "right-half":"Right half" };
+const ZBOX = { top:[0, 0, 100, 17], bottom:[0, 83, 100, 17], left:[0, 17, 13, 66], right:[87, 17, 13, 66],
+  "left-half":[13, 17, 24, 66], "right-half":[63, 17, 24, 66], center:[37, 17, 26, 66] };
+let scrSel = null;
+function renderPicker() {
+  const box = $("#scrPick"); if (!box) return;
+  const rooms = roomsOf();
+  if (!scrSel || !devById(scrSel)) scrSel = (rooms.find(([r]) => r === "Office")?.[1] || S.devices)[0]?.id;
+  const sel = devById(scrSel);
+  const key = JSON.stringify([scrSel, S.devices.map(d => [d.id, d.name, d.zone, glow(d), d.room])]);
+  if (box._k === key) return;
+  box._k = key;
+  const pills = z => S.devices.filter(d => (d.zone || "all") === z).map(d => `<span class="pill"><i style="background:rgb(${glow(d)})"></i>${esc(d.name)}</span>`).join("");
+  const sr = sel ? glow(sel).join(",") : "255,255,255";
+  const hs = (z, style) => `<div class="hs${sel && (sel.zone || "all") === z ? " sel" : ""}" data-z="${z}" ${style}><b>${ZSHORT[z]}</b>${pills(z)}</div>`;
+  box.innerHTML = `<div class="scr" style="--sr:${sr}">
+    <div class="scrl">${rooms.map(([r, list]) => `<h4>${esc(roomLabel(r))}</h4>` + list.map(d => `<button class="${d.id === scrSel ? "on" : ""}" data-id="${esc(d.id)}"><i style="background:rgb(${glow(d)})"></i>${esc(d.name)}<small>${ZSHORT[d.zone || "all"]}</small></button>`).join("")).join("")}</div>
+    <div><div class="mon">${Object.entries(ZBOX).map(([z, [l, t, w, h]]) => hs(z, `style="left:${l}%;top:${t}%;width:${w}%;height:${h}%"`)).join("")}</div><div class="stand"></div>
+      <div class="scrx">${hs("all", "")}${hs("sides", "")}</div>
+      <p class="help">Edges sample just inside the screen edge, past taskbars and window borders. Halves and the whole screen respond more slowly, which suits lights further from the monitor. Wrap around is for strips: one end climbs the left side, the other comes down the right.</p></div></div>`;
+  box.querySelectorAll(".scrl button").forEach(b => b.onclick = () => { scrSel = b.dataset.id; renderPicker(); });
+  box.querySelectorAll(".hs").forEach(h => h.onclick = () => {
+    if (!scrSel) return;
+    buzz();
+    optimistic(scrSel, {}, { zone:h.dataset.z });
+    act(scrSel, { action:"screen_zone", zone:h.dataset.z });
+  });
 }
 function makeLightRow(id) {
   const row = document.createElement("div");
   row.className = "lrow"; row.dataset.id = id;
   row.innerHTML = `<span class="bulb">${ICON_BULB}</span><input class="in nm" spellcheck="false" aria-label="Name"><input class="in rm" list="roomlist" placeholder="Room" spellcheck="false" aria-label="Room">
-    <select class="in zone" aria-label="Screen zone">${ZONES.map(z => `<option value="${esc(z.id)}">Screen: ${esc(z.name)}</option>`).join("")}</select>
     <label class="gm"><button class="switch" aria-label="Govee scenes"></button>Govee scenes</label><div class="meta"></div>`;
   const enter = e => { if (e.key === "Enter") e.target.blur(); };
   $(".nm", row).onchange = e => act(id, { action:"rename", name:e.target.value }); $(".nm", row).onkeydown = enter;
   $(".rm", row).onchange = e => act(id, { action:"room", room:e.target.value.trim() }); $(".rm", row).onkeydown = enter;
-  $(".zone", row).onchange = e => act(id, { action:"screen_zone", zone:e.target.value });
   $(".gm .switch", row).onclick = e => { e.preventDefault(); const sw = e.currentTarget, on = !sw.classList.contains("on"); sw.classList.toggle("on", on); act(id, { action:"govee_modes", on }); };
   return row;
 }

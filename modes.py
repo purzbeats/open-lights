@@ -263,7 +263,8 @@ class Modes:
             cur, nxt = self.scheduled_at(now), self.next_change(now)
             st = self.data["state"]
             return {
-                "modes": [{"id": m["id"], "name": m["name"], "scope": m.get("scope")} for m in self.data["modes"]],
+                "modes": [{"id": m["id"], "name": m["name"], "scope": m.get("scope"), "steps": m.get("steps", [])}
+                          for m in self.data["modes"]],
                 "active": st.get("active"),
                 "override": st.get("override"),
                 "schedule": self.data["schedule"],

@@ -1029,9 +1029,41 @@ MODE_FADE = 1.5
 sync = ScreenSync(monitor=0, remote=os.name != "nt" or bool(os.environ.get("GOVEE_REMOTE_SCREEN")))
 
 
+VOLATILE = ("last_seen", "fresh")     # change on every poll; left out of pushed state so it only goes out on real changes
+
+
+def live_state():
+    return {"devices": [{k: v for k, v in d.items() if k not in VOLATILE} for d in snapshot()],
+            "modes": modes.status()}
+
+
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, *a):
         pass
+
+    def _events(self):
+        """Server-sent events: the whole state whenever it changes, so every open page is live without polling."""
+        self.send_response(200)
+        self.send_header("Content-Type", "text/event-stream")
+        self.send_header("Cache-Control", "no-cache")
+        self.send_header("X-Accel-Buffering", "no")
+        self.end_headers()
+        last, beat = None, 0.0
+        try:
+            self.wfile.write(b"retry: 2000\n\n")
+            while True:
+                data = json.dumps(live_state(), separators=(",", ":"))
+                now = time.time()
+                if data != last:
+                    self.wfile.write(b"data: " + data.encode() + b"\n\n")
+                    last, beat = data, now
+                elif now - beat > 15:                       # lets the page notice a dead connection
+                    self.wfile.write(b"event: ping\ndata: 1\n\n")
+                    beat = now
+                self.wfile.flush()
+                time.sleep(0.2)
+        except (OSError, ValueError):                       # page closed
+            return
 
     def _json(self, obj, code=200):
         body = json.dumps(obj).encode()
@@ -1044,6 +1076,10 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         url = urlsplit(self.path)
         q = parse_qs(url.query)
+        if url.path == "/api/events":
+            return self._events()
+        if url.path == "/api/state":
+            return self._json(live_state())
         if url.path == "/api/modes":
             return self._json(modes.status())
         if url.path == "/api/sync/want":                    # the PC's screen agent asks: should I send frames?
@@ -1077,6 +1113,7 @@ class Handler(BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header("Content-Type", "text/html; charset=utf-8")
             self.send_header("Content-Length", str(len(body)))
+            self.send_header("Cache-Control", "no-cache")
             self.end_headers()
             self.wfile.write(body)
         elif self.path == "/api/devices":
@@ -1139,7 +1176,7 @@ class Handler(BaseHTTPRequestHandler):
 
 
 PHONE_FILES = {      # url -> (file, content type); an explicit list, so nothing else in the folder is served
-    "/m": ("m.html", "text/html; charset=utf-8"),
+    "/m": ("index.html", "text/html; charset=utf-8"),      # same app; /m is the installed app's start URL
     "/manifest.webmanifest": ("static/manifest.webmanifest", "application/manifest+json"),
     "/sw.js": ("static/sw.js", "text/javascript"),
     "/static/icon-192.png": ("static/icon-192.png", "image/png"),

@@ -2,458 +2,1018 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0c10">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/static/icon-192.png">
 <title>Lights</title>
 <style>
-  :root { --bg:#0d0e12; --card:#16181f; --line:#262a35; --text:#eceef3; --dim:#8a8fa1; }
-  * { box-sizing:border-box; }
-  body { margin:0; font:15px/1.4 system-ui,"Segoe UI",sans-serif; background:var(--bg); color:var(--text); }
-  header { display:flex; align-items:center; gap:10px; padding:18px 24px; border-bottom:1px solid var(--line); flex-wrap:wrap; }
-  h1 { font-size:20px; margin:0 auto 0 0; letter-spacing:.2px; }
-  .count { color:var(--dim); font-size:13px; font-weight:400; margin-left:8px; }
-  button { font:inherit; color:var(--text); background:#21242e; border:1px solid var(--line); border-radius:8px; padding:7px 14px; cursor:pointer; }
-  button:hover { background:#2a2e3a; }
-  .all { display:flex; align-items:center; gap:14px; padding:14px 24px; border-bottom:1px solid var(--line); flex-wrap:wrap; background:#111319; }
-  .all .lbl { color:var(--dim); font-size:13px; }
-  .all input[type=range] { width:160px; }
-  main { padding:8px 24px 40px; }
-  .room { margin-top:22px; }
-  .room-head { display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:0 2px 12px; }
-  .room-head h2 { font-size:17px; margin:0 6px 0 0; }
-  .room-head .n { color:var(--dim); font-size:13px; font-weight:400; margin-left:6px; }
-  .room-head input[type=range] { width:140px; }
-  .grid { display:grid; gap:16px; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); }
-  .roomin { flex:1; background:#1d2029; border:1px solid var(--line); border-radius:6px; color:var(--text); font:inherit; font-size:13px; padding:3px 8px; }
-  .card { --glow:#555; background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px 18px; position:relative; overflow:hidden; transition:opacity .2s; }
-  .card::before { content:""; position:absolute; inset:0 0 auto 0; height:4px; background:var(--glow); box-shadow:0 0 24px 4px var(--glow); }
-  .card.off::before { background:#2c2f39; box-shadow:none; }
-  .card.offline { opacity:.45; }
-  .card.unconfirmed { border-color:#a33; }
-  .warn { color:#ff7272; }
-  .top { display:flex; align-items:center; gap:10px; }
-  .name { flex:1; min-width:0; background:none; border:1px solid transparent; border-radius:6px; color:var(--text); font:600 16px system-ui,"Segoe UI",sans-serif; padding:3px 4px; margin-left:-5px; }
-  .name:hover { border-color:var(--line); }
-  .name:focus { outline:none; border-color:#4a5063; }
-  .meta { color:var(--dim); font-size:12px; margin:2px 0 12px; }
-  .toggle { position:relative; width:44px; height:24px; flex:none; }
-  .toggle input { opacity:0; width:0; height:0; }
-  .toggle span { position:absolute; inset:0; background:#333744; border-radius:24px; cursor:pointer; transition:.15s; }
-  .toggle span::after { content:""; position:absolute; left:3px; top:3px; width:18px; height:18px; background:#fff; border-radius:50%; transition:.15s; }
-  .toggle input:checked + span { background:var(--glow); }
-  .toggle input:checked + span::after { transform:translateX(20px); }
-  .row { display:flex; align-items:center; gap:10px; margin:8px 0; color:var(--dim); font-size:13px; }
-  .row > span:first-child { width:78px; flex:none; }
-  .row output { width:52px; text-align:right; font-variant-numeric:tabular-nums; }
-  input[type=range] { flex:1; accent-color:#c9ccd6; }
-  input[type=color] { width:40px; height:26px; border:1px solid var(--line); border-radius:6px; background:none; padding:1px; cursor:pointer; }
-  .swatches { display:flex; gap:7px; flex-wrap:wrap; }
-  .sw { width:26px; height:26px; border-radius:50%; border:2px solid #0006; padding:0; cursor:pointer; flex:none; }
-  .sw:hover { transform:scale(1.12); }
-  .sw.k { font-size:9px; color:#222; font-weight:700; }
-  .badge { font-size:11px; font-weight:600; letter-spacing:.3px; padding:2px 7px; border-radius:20px; flex:none; text-transform:uppercase; }
-  .badge.lan { background:#12351f; color:#5fe08a; border:1px solid #1f5a33; }
-  .badge.cloud { background:#3a2a0f; color:#f2b84b; border:1px solid #5f4518; }
-  .legend { color:var(--dim); font-size:13px; display:flex; gap:12px; align-items:center; }
-  .legend b { font-weight:600; }
-  select { font:inherit; font-size:13px; color:var(--text); background:#1d2029; border:1px solid var(--line); border-radius:8px; padding:6px 8px; }
-  .modesel { flex:1; min-width:0; }
-  .fxtag { font-size:11px; color:#c9a7ff; margin-left:4px; }
-  .modes { display:flex; align-items:center; gap:10px; padding:14px 24px; border-bottom:1px solid var(--line); flex-wrap:wrap; background:#101218; }
-  .modes .lbl, .all .lbl { color:var(--dim); font-size:13px; }
-  .pills { display:flex; gap:8px; flex-wrap:wrap; }
-  .pill { border-radius:20px; padding:7px 16px; }
-  .pill.active { background:#e8e9ee; color:#111; border-color:#e8e9ee; font-weight:600; }
-  .mstatus { color:var(--dim); font-size:13px; margin-right:auto; }
-  .mstatus.ov { color:#f2b84b; }
-  .panel { margin:0 24px; padding:18px 20px; border:1px solid var(--line); border-top:none; border-radius:0 0 14px 14px; background:#121419; }
-  .panel h3 { font-size:14px; margin:18px 0 10px; color:var(--text); }
-  .panel h3:first-child { margin-top:0; }
-  .panel .hint { color:var(--dim); font-size:12.5px; margin:8px 0 0; max-width:760px; }
-  .srow, .mrow { display:flex; align-items:center; gap:8px; margin:6px 0; flex-wrap:wrap; }
-  .day { padding:4px 0; width:38px; font-size:12px; border-radius:6px; }
-  .day.on { background:#2f4a7a; border-color:#3f63a3; }
-  input[type=time], .panel input[type=text] { font:inherit; font-size:13px; color:var(--text); background:#1d2029; border:1px solid var(--line); border-radius:8px; padding:5px 8px; color-scheme:dark; }
-  .mrow .mname { width:150px; font-weight:600; }
-  .primary { background:#2f4a7a; border-color:#3f63a3; }
-  .x { padding:4px 10px; color:var(--dim); }
-  code { background:#1d2029; padding:2px 6px; border-radius:5px; font-size:12.5px; user-select:all; }
-  .empty { color:var(--dim); grid-column:1/-1; text-align:center; padding:70px 20px; }
+  :root {
+    --bg:#0b0c10; --s1:#14161c; --s2:#1b1e26; --s3:#242833; --line:#23262f; --line2:#30343f;
+    --text:#eef0f5; --dim:#8b90a0; --dim2:#5d6272; --amber:#f2b84b; --red:#ff6b6b; --ok:#5fe08a;
+    --amb:transparent; --r:18px; --side:232px;
+    --ease:cubic-bezier(.2,.8,.2,1);
+  }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html { color-scheme:dark; }
+  body { margin:0; background:var(--bg); color:var(--text); font:15px/1.4 Inter,system-ui,"Segoe UI",sans-serif; -webkit-font-smoothing:antialiased; }
+  body::before { content:""; position:fixed; inset:-20% -10% auto -10%; height:70vh; pointer-events:none; z-index:0;
+    background:radial-gradient(60% 60% at 30% 0%, var(--amb), transparent 70%); opacity:.16; transition:background 1.2s var(--ease); }
+  button { font:inherit; color:inherit; background:none; border:0; padding:0; cursor:pointer; }
+  input, select { font:inherit; color:var(--text); }
+  [hidden] { display:none !important; }
+
+  /* ---------- shell ---------- */
+  .side { position:fixed; inset:0 auto 0 0; width:var(--side); padding:22px 14px; border-right:1px solid var(--line); background:#0d0e13e6;
+    backdrop-filter:blur(12px); display:flex; flex-direction:column; gap:2px; z-index:5; }
+  .brand { display:flex; align-items:center; gap:10px; font-weight:700; font-size:16px; padding:4px 10px 20px; letter-spacing:.2px; }
+  .brand i { width:22px; height:22px; border-radius:50%; background:conic-gradient(from 200deg,#ffb347,#ff5e62,#a46bff,#4fc3ff,#ffb347); box-shadow:0 0 16px #ff9a5a66; }
+  .nav { text-decoration:none; display:flex; align-items:center; gap:12px; padding:9px 12px; border-radius:11px; color:var(--dim); font-weight:500; transition:background .15s,color .15s; }
+  .nav:hover { background:var(--s1); color:var(--text); }
+  .nav.on { background:var(--s2); color:var(--text); }
+  .nav svg { width:19px; height:19px; flex:none; }
+  .nav.sub { padding:7px 12px 7px 43px; font-size:14px; }
+  .nav.sub b { margin-left:auto; font-weight:500; font-size:12px; color:var(--dim2); }
+  .side .grow { flex:1; }
+  .conn { display:flex; align-items:center; gap:8px; color:var(--dim2); font-size:12.5px; padding:8px 12px; }
+  .conn i { width:7px; height:7px; border-radius:50%; background:var(--dim2); }
+  .conn.live i { background:var(--ok); box-shadow:0 0 8px var(--ok); }
+  .conn.down i { background:var(--red); }
+  main { position:relative; z-index:1; margin-left:var(--side); padding:34px 40px 80px; max-width:1240px; }
+  .tabs { display:none; }
+  .view { animation:in .35s var(--ease); }
+  @keyframes in { from { opacity:0; transform:translateY(6px); } }
+
+  /* ---------- home ---------- */
+  .hello { color:var(--dim); font-size:14px; }
+  .hero { display:flex; align-items:flex-end; gap:16px; flex-wrap:wrap; margin:2px 0 22px; }
+  .hero h1 { font-size:34px; line-height:1.15; margin:0; font-weight:700; letter-spacing:-.4px; }
+  .hero .st { color:var(--dim); font-size:14px; padding-bottom:5px; }
+  .hero .st.ov { color:var(--amber); }
+  .chip { border:1px solid var(--line2); border-radius:30px; padding:6px 14px; font-size:13px; font-weight:600; background:var(--s1); transition:background .15s; }
+  .chip:hover { background:var(--s2); }
+  .chip.amber { color:var(--amber); border-color:#5f4518; background:#2a1f0c; }
+
+  .modes { display:grid; grid-template-columns:repeat(auto-fill,minmax(170px,1fr)); gap:12px; }
+  .mode { position:relative; text-align:left; padding:16px 16px 14px; border-radius:var(--r); background:var(--s1); border:1px solid var(--line);
+    overflow:hidden; transition:transform .15s var(--ease), border-color .3s, background .3s; min-height:92px; display:flex; flex-direction:column; justify-content:flex-end; }
+  .mode:hover { background:var(--s2); }
+  .mode:active { transform:scale(.97); }
+  .mode .mg { position:absolute; inset:0 0 auto 0; height:4px; background:var(--mg); opacity:.75; transition:height .4s var(--ease), opacity .4s; }
+  .mode b { position:relative; font-size:15.5px; font-weight:650; }
+  .mode small { position:relative; color:var(--dim); font-size:12.5px; margin-top:2px; }
+  .mode.on { border-color:transparent; }
+  .mode.on .mg { height:100%; opacity:.28; }
+  .mode.on::after { content:""; position:absolute; inset:0; border-radius:inherit; border:1.5px solid #ffffff38; pointer-events:none; }
+  .mode.on small { color:#e6e8ee; }
+
+  .day { margin:22px 0 6px; }
+  .tl { position:relative; display:flex; height:30px; border-radius:10px; overflow:hidden; background:var(--s1); border:1px solid var(--line); }
+  .tl span { height:100%; display:flex; align-items:center; padding:0 9px; font-size:12px; font-weight:600; white-space:nowrap; overflow:hidden; color:#fff; text-shadow:0 1px 2px #0008;
+    border-right:1px solid #0b0c10aa; }
+  .tl .now { position:absolute; top:-3px; bottom:-3px; width:2px; background:#fff; box-shadow:0 0 8px #fff; border-radius:2px; }
+  .ticks { display:flex; justify-content:space-between; color:var(--dim2); font-size:11px; margin-top:5px; padding:0 1px; }
+
+  .room { margin-top:34px; }
+  .rhead { display:flex; align-items:center; gap:14px; margin-bottom:14px; flex-wrap:wrap; }
+  .rhead h2 { font-size:21px; margin:0; font-weight:700; letter-spacing:-.2px; }
+  .rhead .rm { color:var(--dim); font-size:13.5px; }
+  .rhead .sp { flex:1; }
+  .rhead .slider { width:220px; height:36px; }
+  .tiles { display:grid; grid-template-columns:repeat(auto-fill,minmax(225px,1fr)); gap:12px; }
+  .tile { --c:#888; --cr:136,136,136; position:relative; display:flex; align-items:center; gap:12px; padding:14px 12px 14px 14px; border-radius:var(--r);
+    background:var(--s1); border:1px solid var(--line); cursor:pointer; user-select:none; overflow:hidden; text-align:left;
+    transition:transform .15s var(--ease), background .5s, border-color .5s; min-height:74px; }
+  .tile:hover { border-color:var(--line2); }
+  .tile:active { transform:scale(.975); }
+  .tile.on { background:radial-gradient(120% 140% at 0% 0%, rgba(var(--cr),.22), transparent 60%), var(--s2); border-color:rgba(var(--cr),.28); }
+  .tile.offline { opacity:.4; }
+  .bulb { width:38px; height:38px; border-radius:50%; flex:none; background:var(--s3); display:grid; place-items:center; transition:background .5s, box-shadow .5s; }
+  .bulb svg { width:19px; height:19px; color:var(--dim); }
+  .tile.on .bulb { background:var(--c); box-shadow:0 0 22px rgba(var(--cr),.55); }
+  .tile.on .bulb svg { color:#0008; }
+  .tile.anim .bulb { background:var(--fx); background-size:200% 200%; animation:drift 6s linear infinite; }
+  @keyframes drift { to { background-position:200% 0; } }
+  .tt { min-width:0; flex:1; }
+  .tt b { display:block; font-weight:600; font-size:14.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .tt small { display:block; color:var(--dim); font-size:12.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .tile.bad .tt small { color:var(--red); }
+  .more { width:32px; height:32px; border-radius:10px; display:grid; place-items:center; color:var(--dim); flex:none; transition:background .15s; }
+  .more:hover { background:#ffffff12; color:var(--text); }
+  .more svg { width:18px; height:18px; }
+  .tile .bar { position:absolute; left:14px; right:14px; bottom:7px; height:2px; border-radius:2px; background:#ffffff10; overflow:hidden; opacity:0; transition:opacity .4s; }
+  .tile.on .bar { opacity:1; }
+  .tile .bar i { display:block; height:100%; width:var(--b,0%); background:rgba(var(--cr),.85); transition:width .4s var(--ease); }
+
+  /* ---------- controls ---------- */
+  .switch { position:relative; width:50px; height:30px; border-radius:30px; background:var(--s3); flex:none; transition:background .25s; }
+  .switch::after { content:""; position:absolute; left:3px; top:3px; width:24px; height:24px; border-radius:50%; background:#fff; transition:transform .25s var(--ease); box-shadow:0 1px 3px #0006; }
+  .switch.on { background:var(--sw,#e8a54b); }
+  .switch.on::after { transform:translateX(20px); }
+  .slider { position:relative; height:52px; border-radius:14px; background:var(--s3); overflow:hidden; cursor:pointer; touch-action:none; user-select:none; }
+  .slider .fill { position:absolute; inset:0 auto 0 0; width:var(--v,50%); background:var(--sc,#e8e9ee); opacity:.9; transition:width .25s var(--ease); }
+  .slider.drag .fill { transition:none; }
+  .slider .lbl { position:absolute; left:14px; top:50%; transform:translateY(-50%); font-weight:650; font-size:14px; color:#111; mix-blend-mode:normal; pointer-events:none;
+    text-shadow:0 0 6px #fff8; }
+  .slider .lbl.light { color:var(--text); text-shadow:none; }
+
+  /* ---------- sheet ---------- */
+  .scrim { position:fixed; inset:0; background:#000a; opacity:0; pointer-events:none; transition:opacity .3s; z-index:20; }
+  .scrim.on { opacity:1; pointer-events:auto; }
+  .sheet { position:fixed; z-index:21; top:0; right:0; bottom:0; width:420px; max-width:100%; background:#121419; border-left:1px solid var(--line);
+    transform:translateX(102%); transition:transform .38s var(--ease); display:flex; flex-direction:column; }
+  .sheet.on { transform:none; }
+  .grab { display:none; }
+  .shead { display:flex; align-items:center; gap:12px; padding:20px 20px 14px; }
+  .shead .bulb { width:42px; height:42px; }
+  .shead h3 { margin:0; font-size:19px; font-weight:700; }
+  .shead small { color:var(--dim); font-size:13px; }
+  .shead > div { flex:1; min-width:0; }
+  .x { width:34px; height:34px; border-radius:10px; display:grid; place-items:center; color:var(--dim); }
+  .x:hover { background:var(--s2); color:var(--text); }
+  .x svg { width:18px; height:18px; }
+  .sbody { flex:1; overflow:auto; padding:4px 20px 30px; overscroll-behavior:contain; }
+  .seg { display:flex; gap:4px; padding:4px; background:var(--s1); border:1px solid var(--line); border-radius:13px; margin:18px 0 16px; }
+  .seg button { flex:1; padding:8px 4px; border-radius:9px; font-size:13px; font-weight:600; color:var(--dim); transition:background .15s,color .15s; }
+  .seg button.on { background:var(--s3); color:var(--text); }
+  .wheel { position:relative; width:min(300px,100%); aspect-ratio:1; margin:6px auto 4px; border-radius:50%; touch-action:none; cursor:crosshair;
+    background:radial-gradient(circle closest-side,#fff,#fff0), conic-gradient(red,#ff0,lime,cyan,blue,#f0f,red); box-shadow:0 0 0 1px #ffffff14, 0 10px 40px #0007; }
+  .thumb { position:absolute; width:26px; height:26px; margin:-13px 0 0 -13px; border-radius:50%; border:3px solid #fff; box-shadow:0 1px 6px #000a; pointer-events:none;
+    transition:left .2s var(--ease), top .2s var(--ease); }
+  .drag .thumb { transition:none; }
+  .ktrack { position:relative; height:52px; border-radius:14px; touch-action:none; cursor:pointer; margin:4px 0 4px; }
+  .ktrack .thumb { top:50%; }
+  .ktrack.off .thumb { display:none; }
+  .kl { display:flex; justify-content:space-between; color:var(--dim2); font-size:11.5px; margin-top:6px; }
+  .dots { display:flex; gap:10px; flex-wrap:wrap; margin-top:18px; }
+  .dot { width:38px; height:38px; border-radius:50%; border:2px solid #0006; transition:transform .15s var(--ease); position:relative; }
+  .dot:hover { transform:scale(1.1); }
+  .dot.on::after { content:""; position:absolute; inset:-6px; border-radius:50%; border:2px solid #fffc; }
+  .wl { display:grid; grid-template-columns:repeat(auto-fill,minmax(110px,1fr)); gap:8px; margin-top:18px; }
+  .wl button { padding:10px; border-radius:12px; background:var(--s1); border:1px solid var(--line); text-align:left; font-size:13px; font-weight:600; display:flex; gap:9px; align-items:center; }
+  .wl button i { width:16px; height:16px; border-radius:50%; flex:none; }
+  .wl button.on { border-color:#ffffff60; background:var(--s2); }
+  .fxg { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:10px; }
+  .fx { position:relative; padding:12px; border-radius:14px; background:var(--s1); border:1px solid var(--line); text-align:left; overflow:hidden; min-height:74px;
+    display:flex; flex-direction:column; justify-content:flex-end; font-weight:600; font-size:13.5px; transition:transform .15s var(--ease), border-color .2s; }
+  .fx:active { transform:scale(.96); }
+  .fx i { position:absolute; inset:0 0 auto 0; height:34px; background:var(--g); background-size:300% 100%; animation:drift 9s linear infinite; opacity:.85;
+    mask-image:linear-gradient(#000,#0000); -webkit-mask-image:linear-gradient(#000,#0000); }
+  .fx.on { border-color:#ffffffa0; }
+  .fx.on::before { content:"Running"; position:absolute; top:8px; right:9px; font-size:10.5px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; color:#fff;
+    background:#0008; padding:2px 7px; border-radius:10px; z-index:1; }
+  .stopfx { width:100%; margin-top:12px; padding:12px; border-radius:13px; background:var(--s2); border:1px solid var(--line2); font-weight:600; }
+  .note { color:var(--dim); font-size:13px; margin:14px 2px 0; }
+  .search { width:100%; padding:11px 14px; border-radius:12px; background:var(--s1); border:1px solid var(--line); outline:none; }
+  .search:focus { border-color:var(--line2); }
+  .scl { display:flex; flex-direction:column; gap:2px; margin-top:10px; }
+  .scl button { text-align:left; padding:10px 12px; border-radius:10px; font-size:14px; }
+  .scl button:hover { background:var(--s1); }
+  .scl button.on { background:var(--s2); font-weight:650; }
+  .sfoot { padding:12px 20px calc(14px + env(safe-area-inset-bottom)); border-top:1px solid var(--line); display:flex; justify-content:space-between; color:var(--dim); font-size:13px; }
+  .sfoot a { color:var(--dim); text-decoration:none; }
+  .sfoot a:hover { color:var(--text); }
+
+  /* ---------- schedule / settings ---------- */
+  h1.page { font-size:30px; margin:0 0 4px; font-weight:700; letter-spacing:-.3px; }
+  .sub { color:var(--dim); margin:0 0 24px; }
+  .card { background:var(--s1); border:1px solid var(--line); border-radius:var(--r); padding:20px; margin-bottom:18px; }
+  .card h2 { margin:0; font-size:16px; font-weight:700; }
+  .ch { display:flex; align-items:center; gap:12px; margin-bottom:16px; flex-wrap:wrap; }
+  .ch .sp { flex:1; }
+  .ch small { color:var(--dim); font-size:13px; }
+  .week { display:grid; grid-template-columns:38px 1fr; gap:7px 10px; align-items:center; }
+  .week > b { color:var(--dim); font-size:12px; font-weight:600; }
+  .week > b.today { color:var(--text); }
+  .week .tl { height:24px; }
+  .week .tl span { font-size:11px; padding:0 6px; }
+  .entry { display:flex; align-items:center; gap:8px; padding:10px 0; border-top:1px solid var(--line); flex-wrap:wrap; }
+  .entry:first-child { border-top:0; }
+  .days { display:flex; gap:3px; }
+  .days button { width:34px; padding:6px 0; border-radius:8px; font-size:12px; font-weight:600; color:var(--dim); background:var(--s2); }
+  .days button.on { background:#2f4a7a; color:#fff; }
+  .in { background:var(--s2); border:1px solid var(--line2); border-radius:10px; padding:7px 10px; font-size:14px; outline:none; min-width:0; }
+  .in:focus { border-color:#4a5063; }
+  .btn { padding:9px 16px; border-radius:11px; background:var(--s2); border:1px solid var(--line2); font-weight:600; font-size:14px; transition:background .15s; white-space:nowrap; }
+  .btn:hover { background:var(--s3); }
+  .btn.primary { background:#e8e9ee; color:#111; border-color:#e8e9ee; }
+  .btn.primary:disabled { opacity:.35; cursor:default; }
+  .btn.ghost { background:none; border-color:transparent; color:var(--dim); }
+  .btn.ghost:hover { color:var(--red); background:#ff6b6b14; }
+  .mrow { display:flex; align-items:center; gap:10px; padding:11px 0; border-top:1px solid var(--line); flex-wrap:wrap; }
+  .mrow:first-child { border-top:0; }
+  .mrow .sw { width:30px; height:30px; border-radius:9px; background:var(--mg); flex:none; }
+  .mrow .nm { font-weight:600; min-width:140px; flex:1; }
+  .msg { color:var(--ok); font-size:12.5px; }
+  .lrow { display:grid; grid-template-columns:38px minmax(140px,1.2fr) minmax(110px,.8fr) minmax(220px,1.2fr) auto; gap:12px; align-items:center; padding:12px 0; border-top:1px solid var(--line); }
+  .lrow:first-of-type { border-top:0; }
+  .lrow .bulb { width:34px; height:34px; }
+  .lrow .meta { grid-column:2 / -1; color:var(--dim2); font-size:12px; margin-top:-6px; display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .lrow.flash { animation:flash 1.6s var(--ease); }
+  @keyframes flash { 0%,40% { background:#ffffff10; } }
+  .gm { display:flex; align-items:center; gap:8px; color:var(--dim); font-size:13px; white-space:nowrap; cursor:pointer; }
+  .gm .switch { transform:scale(.8); }
+  .badge { font-size:10.5px; font-weight:700; letter-spacing:.3px; padding:2px 7px; border-radius:20px; text-transform:uppercase; }
+  .badge.lan { background:#12351f; color:var(--ok); }
+  .badge.cloud { background:#3a2a0f; color:var(--amber); }
+  .help { color:var(--dim); font-size:13px; margin:14px 0 0; max-width:760px; }
+  code { background:var(--s2); padding:3px 7px; border-radius:6px; font-size:12.5px; user-select:all; word-break:break-all; }
+  .url { display:flex; gap:12px; align-items:center; padding:7px 0; flex-wrap:wrap; }
+  .url span { color:var(--dim); font-size:13px; }
+  .empty { color:var(--dim); text-align:center; padding:80px 20px; }
+  .toast { position:fixed; left:50%; bottom:calc(30px + env(safe-area-inset-bottom)); transform:translate(-50%,20px); background:#2a2d37; border:1px solid var(--line2);
+    padding:10px 18px; border-radius:12px; font-size:14px; opacity:0; transition:.3s var(--ease); z-index:40; pointer-events:none; }
+  .toast.on { opacity:1; transform:translate(-50%,0); }
+
+  /* ---------- phone ---------- */
+  @media (max-width: 820px) {
+    .side { display:none; }
+    main { margin:0; padding:calc(env(safe-area-inset-top) + 20px) 16px calc(env(safe-area-inset-bottom) + 96px); }
+    .tabs { display:flex; position:fixed; left:0; right:0; bottom:0; z-index:10; padding:8px 12px calc(env(safe-area-inset-bottom) + 8px);
+      background:#0d0e13ee; backdrop-filter:blur(14px); border-top:1px solid var(--line); }
+    .tabs a { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; color:var(--dim2); font-size:11.5px; font-weight:600; text-decoration:none; padding:4px; }
+    .tabs a.on { color:var(--text); }
+    .tabs svg { width:23px; height:23px; }
+    .hero h1 { font-size:28px; }
+    .modes { grid-template-columns:1fr 1fr; gap:10px; }
+    .mode { min-height:80px; padding:14px; }
+    .room { margin-top:28px; }
+    .rhead { gap:10px; }
+    .rhead .slider { order:5; width:100%; height:44px; }
+    .tiles { grid-template-columns:1fr 1fr; gap:10px; }
+    .tile { flex-direction:column; align-items:flex-start; gap:10px; padding:14px; min-height:112px; }
+    .tile .more { position:absolute; top:8px; right:6px; }
+    .tt { width:100%; }
+    .sheet { top:auto; left:0; width:100%; max-height:92vh; border-left:0; border-top:1px solid var(--line2); border-radius:24px 24px 0 0; transform:translateY(102%); }
+    .grab { display:block; width:40px; height:5px; border-radius:5px; background:var(--line2); margin:10px auto 0; flex:none; }
+    .grabzone { touch-action:none; }
+    .shead { padding-top:10px; }
+    .lrow { grid-template-columns:34px 1fr 1fr; }
+    .lrow .zone, .lrow .gm { grid-column:2 / span 1; }
+    .lrow .gm { grid-column:3; }
+    .days button { width:30px; }
+    .card { padding:16px; }
+    .week { grid-template-columns:32px 1fr; }
+  }
 </style>
 </head>
 <body>
-<header>
-  <h1>Lights<span class="count" id="count"></span></h1>
-  <span class="legend" id="legend"></span>
-  <button id="scan">Scan for lights</button>
-</header>
-<section class="modes">
-  <span class="lbl">Mode</span>
-  <div class="pills" id="modeBtns"></div>
-  <span class="mstatus" id="modeStatus"></span>
-  <button id="resumeBtn" hidden>Resume schedule</button>
-  <button id="panelBtn">Modes &amp; schedule</button>
-</section>
-<section class="panel" id="panel" hidden></section>
-<section class="all" id="allBar"><span class="lbl">All lights</span></section>
-<main id="rooms"><div class="empty">Looking for lights…</div></main>
+<nav class="side" id="side">
+  <div class="brand"><i></i>Lights</div>
+  <a class="nav" href="#home" data-v="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3.5 10.5 12 4l8.5 6.5V20a1 1 0 0 1-1 1H15v-6H9v6H4.5a1 1 0 0 1-1-1z"/></svg>Home</a>
+  <div id="sideRooms"></div>
+  <a class="nav" href="#schedule" data-v="schedule"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>Schedule</a>
+  <a class="nav" href="#settings" data-v="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h9m4 0h3M4 17h3m4 0h9"/><circle cx="15" cy="7" r="2.2"/><circle cx="9" cy="17" r="2.2"/></svg>Settings</a>
+  <div class="grow"></div>
+  <div class="conn" id="conn"><i></i><span>Connecting…</span></div>
+</nav>
+
+<main id="main"></main>
+
+<nav class="tabs" id="tabs">
+  <a href="#home" data-v="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3.5 10.5 12 4l8.5 6.5V20a1 1 0 0 1-1 1H15v-6H9v6H4.5a1 1 0 0 1-1-1z"/></svg>Home</a>
+  <a href="#schedule" data-v="schedule"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>Schedule</a>
+  <a href="#settings" data-v="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h9m4 0h3M4 17h3m4 0h9"/><circle cx="15" cy="7" r="2.2"/><circle cx="9" cy="17" r="2.2"/></svg>Settings</a>
+</nav>
+
+<div class="scrim" id="scrim"></div>
+<aside class="sheet" id="sheet" aria-hidden="true">
+  <div class="grabzone" id="grabzone"><div class="grab"></div>
+    <div class="shead"><span class="bulb" id="sBulb"></span><div><h3 id="sTitle"></h3><small id="sSub"></small></div>
+      <button class="switch" id="sPower" aria-label="Power"></button>
+      <button class="x" id="sClose" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </div>
+  </div>
+  <div class="sbody" id="sBody"></div>
+  <div class="sfoot" id="sFoot"></div>
+</aside>
+<div class="toast" id="toast"></div>
 <datalist id="roomlist"></datalist>
 
 <script>
-const SWATCHES = [
-  { hex:"#ff0000" }, { hex:"#00d040" }, { hex:"#0050ff" }, { hex:"#ffaa00" },
-  { hex:"#9a00ff" }, { hex:"#ff2fa8" }, { hex:"#00e0d0" },
-  { k:2700, label:"2.7K" }, { k:4000, label:"4K" }, { k:6500, label:"6.5K" },
-];
-const cards = new Map();
-let EFFECTS = [];
-let ZONES = [];
-const zonesReady = fetch("/api/zones").then(r => r.json()).then(z => { ZONES = z; });
-const effectsReady = fetch("/api/effects").then(r => r.json()).then(e => { EFFECTS = e; });
-const busy = {};          // id -> timestamp of last local interaction
-const timers = {};
+"use strict";
+// ======================================================================= helpers
+const $ = (s, el = document) => el.querySelector(s);
+const esc = t => String(t ?? "").replace(/[&<>"]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" })[c]);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const post = (url, body) => fetch(url, { method:"POST", headers:{ "Content-Type":"application/json" }, body:JSON.stringify(body || {}) });
+const buzz = () => navigator.vibrate?.(8);
+const ICON_BULB = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.3 1.1 2.2h5c0-.9.4-1.6 1.1-2.2A6 6 0 0 0 12 3z"/></svg>`;
+const ICON_MORE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>`;
 
-const post = (url, body) => fetch(url, { method:"POST", headers:{ "Content-Type":"application/json" }, body:JSON.stringify(body||{}) });
-const act = (id, body) => { busy[id] = Date.now(); return post(`/api/devices/${encodeURIComponent(id)}`, body); };
+function k2rgb(k) {
+  k /= 100; let r, g, b;
+  if (k <= 66) { r = 255; g = 99.47 * Math.log(k) - 161.12; b = k <= 19 ? 0 : 138.52 * Math.log(k - 10) - 305.04; }
+  else { r = 329.7 * Math.pow(k - 60, -0.1332); g = 288.12 * Math.pow(k - 60, -0.0755); b = 255; }
+  return [r, g, b].map(v => clamp(Math.round(v), 0, 255));
+}
+const hex = ([r, g, b]) => "#" + [r, g, b].map(v => v.toString(16).padStart(2, "0")).join("");
+const unhex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+function hsv2rgb(h, s, v) {
+  const f = n => { const k = (n + h / 60) % 6; return v - v * s * Math.max(0, Math.min(k, 4 - k, 1)); };
+  return [f(5), f(3), f(1)].map(x => Math.round(x * 255));
+}
+function rgb2hsv([r, g, b]) {
+  r /= 255; g /= 255; b /= 255;
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
+  let h = 0;
+  if (d) h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  return [(h * 60 + 360) % 360, mx ? d / mx : 0, mx];
+}
+function hueName(rgb) {
+  const [h, s] = rgb2hsv(rgb);
+  if (s < 0.18) return "White";
+  return h < 12 ? "Red" : h < 35 ? "Orange" : h < 50 ? "Amber" : h < 68 ? "Yellow" : h < 95 ? "Lime" : h < 150 ? "Green"
+    : h < 175 ? "Teal" : h < 200 ? "Cyan" : h < 245 ? "Blue" : h < 265 ? "Indigo" : h < 295 ? "Purple" : h < 335 ? "Pink" : "Red";
+}
+const kName = k => k < 3000 ? "Warm white" : k < 4500 ? "Neutral white" : k < 5800 ? "Daylight" : "Cool white";
 
-function throttle(key, fn, ms = 140) {
-  const t = timers[key] ||= { last:0, pending:null };
+// effect looks (for chips, tiles and mode colors)
+const FXP = {
+  rainbow:["#ff4545","#ffcf3b","#3bff6e","#3bc8ff","#a63bff","#ff4545"], candy:["#ff2a4d","#fff0f0","#ff2a4d"],
+  twinkle:["#14256e","#e8f0ff","#3050ff","#14256e"], fire:["#ff3000","#ff8a00","#ffc640","#ff3000"], aurora:["#00ff9c","#00a0ff","#8a2be2","#00ff9c"],
+  ocean:["#0030ff","#00c8ff","#00ffd0","#0030ff"], breathe:["#ffb070","#4a2a18","#ffb070"], police:["#ff1a1a","#1a3cff","#ff1a1a"],
+  screen:["#7f5af0","#2cb67d","#ff8906","#7f5af0"],
+};
+const fxGrad = id => `linear-gradient(90deg,${(FXP[id] || ["#888", "#444", "#888"]).join(",")})`;
+const fxName = id => id === "screen" ? "Following screen" : (EFFECTS.find(e => e.id === id) || {}).name || id;
+
+// ======================================================================= state
+let S = { devices:[], modes:null };
+let EFFECTS = [], ZONES = [], INFO = {};
+const pend = {};             // id -> { until, status, top }: what we just asked for, shown until the server agrees
+let view = "home";
+
+Promise.all([
+  fetch("/api/effects").then(r => r.json()).then(e => { EFFECTS = e; }),
+  fetch("/api/zones").then(r => r.json()).then(z => { ZONES = z; }),
+  fetch("/api/info").then(r => r.json()).then(i => { INFO = i; }),
+]).catch(() => {}).finally(() => render());
+
+const devById = id => S.devices.find(d => d.id === id);
+function roomsOf() {
+  const m = new Map();
+  for (const d of S.devices) { const r = d.room || ""; if (!m.has(r)) m.set(r, []); m.get(r).push(d); }
+  return [...m.entries()].sort((a, b) => (a[0] === "") - (b[0] === "") || b[1].length - a[1].length || a[0].localeCompare(b[0]));
+}
+const roomLabel = r => r || "Other";
+function idsOf(target) {
+  if (target === "all") return S.devices.filter(d => d.online).map(d => d.id);
+  if (target.startsWith("room:")) return S.devices.filter(d => d.online && (d.room || "") === target.slice(5)).map(d => d.id);
+  return [target];
+}
+function applyPending() {
+  const now = Date.now();
+  for (const d of S.devices) {
+    const p = pend[d.id];
+    if (!p) continue;
+    if (p.until < now) { delete pend[d.id]; continue; }
+    d.status = { ...(d.status || {}), ...p.status };
+    Object.assign(d, p.top);
+  }
+}
+function optimistic(target, status = {}, top = {}) {
+  const until = Date.now() + 2500;
+  for (const id of idsOf(target)) {
+    const old = pend[id] && pend[id].until > Date.now() ? pend[id] : { status:{}, top:{} };
+    pend[id] = { until, status:{ ...old.status, ...status }, top:{ ...old.top, ...top } };
+  }
+  applyPending();
+  render();
+}
+async function act(target, body) {
+  try {
+    const r = await post(`/api/devices/${encodeURIComponent(target)}`, body);
+    if (!r.ok) toast("That light didn't take the command");
+  } catch { toast("Can't reach the lights server"); }
+}
+function throttle(key, fn, ms = 130) {
+  const t = throttle[key] ||= { last:0, pending:null };
   clearTimeout(t.pending);
   t.pending = setTimeout(() => { t.last = Date.now(); fn(); }, Math.max(0, t.last + ms - Date.now()));
 }
+let toastT;
+function toast(msg) { const t = $("#toast"); t.textContent = msg; t.classList.add("on"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("on"), 2600); }
 
-const hex2rgb = h => ({ r:parseInt(h.slice(1,3),16), g:parseInt(h.slice(3,5),16), b:parseInt(h.slice(5,7),16) });
-const rgb2hex = ({r,g,b}) => "#" + [r,g,b].map(v => v.toString(16).padStart(2,"0")).join("");
-function k2rgb(k) {
-  k /= 100; let r, g, b;
-  if (k <= 66) { r = 255; g = 99.47*Math.log(k) - 161.12; b = k <= 19 ? 0 : 138.52*Math.log(k-10) - 305.04; }
-  else { r = 329.7*Math.pow(k-60,-0.1332); g = 288.12*Math.pow(k-60,-0.0755); b = 255; }
-  const c = v => Math.max(0, Math.min(255, Math.round(v)));
-  return { r:c(r), g:c(g), b:c(b) };
+// what a light looks like right now
+function glow(d) {
+  const st = d.status || {};
+  if (st.colorTemInKelvin > 0) return k2rgb(st.colorTemInKelvin);
+  if (st.color && st.color.r + st.color.g + st.color.b > 40) return [st.color.r, st.color.g, st.color.b];
+  return d.effect ? unhex((FXP[d.effect] || ["#ffb070"])[1] || "#ffb070") : d.scene ? [255, 154, 60] : [200, 200, 200];
 }
-const glowOf = st => !st ? "#555" : st.colorTemInKelvin > 0 ? rgb2hex(k2rgb(st.colorTemInKelvin)) : rgb2hex(st.color || {r:85,g:85,b:85});
-
-function swatchButtons(container, onPick) {
-  for (const s of SWATCHES) {
-    const b = document.createElement("button");
-    b.className = "sw" + (s.k ? " k" : "");
-    b.style.background = s.k ? rgb2hex(k2rgb(s.k)) : s.hex;
-    b.title = s.k ? `White ${s.k}K` : s.hex;
-    if (s.k) b.textContent = s.label;
-    b.onclick = () => onPick(s);
-    container.appendChild(b);
-  }
-}
-// fades (seconds): buttons glide, sliders and the color picker stay instant so dragging feels direct
-const FADE = { power:0.8, swatch:0.7, group:1.2, effect:1.5 };
-const pickBody = (s, fade = FADE.swatch) => s.k ? { action:"kelvin", value:s.k, fade } : { action:"color", ...hex2rgb(s.hex), fade };
-
-function makeCard(d) {
-  const el = document.createElement("div");
-  el.className = "card";
-  el.innerHTML = `
-    <div class="top">
-      <input class="name" spellcheck="false"><span class="badge"></span>
-      <label class="toggle"><input type="checkbox" class="pw"><span></span></label>
-    </div>
-    <div class="meta"></div>
-    <div class="row"><span>Brightness</span><input type="range" class="br" min="1" max="100"><output class="brv"></output></div>
-    <div class="row"><span>Color</span><input type="color" class="col"></div>
-    <div class="row"><span>White</span><input type="range" class="kel" min="2000" max="9000" step="100"><output class="kv"></output></div>
-    <div class="swatches"></div>
-    <div class="row" style="margin-top:12px"><span>Mode</span><select class="modesel"><option value="">—</option></select></div>
-    <div class="row"><span>Screen</span><select class="zonesel modesel" title="Which part of the screen this light follows in Screen sync"></select></div>
-    <label class="row"><span>Effects</span><input type="checkbox" class="gm"> Govee modes only</label>
-    <div class="row"><span>Room</span><input class="roomin" list="roomlist" placeholder="Unassigned" spellcheck="false"></div>`;
-  const $ = s => el.querySelector(s);
-  const id = d.id;
-  $(".pw").onchange = e => { act(id, { action:"power", on:e.target.checked, fade:FADE.power }); el.classList.toggle("off", !e.target.checked); };
-  $(".br").oninput = e => { $(".brv").value = e.target.value + "%"; busy[id] = Date.now(); throttle(id+"br", () => act(id, { action:"brightness", value:+e.target.value })); };
-  $(".col").oninput = e => { el.style.setProperty("--glow", e.target.value); busy[id] = Date.now(); throttle(id+"c", () => act(id, { action:"color", ...hex2rgb(e.target.value) })); };
-  $(".kel").oninput = e => { $(".kv").value = e.target.value + "K"; el.style.setProperty("--glow", rgb2hex(k2rgb(+e.target.value))); busy[id] = Date.now(); throttle(id+"k", () => act(id, { action:"kelvin", value:+e.target.value })); };
-  $(".name").onchange = e => act(id, { action:"rename", name:e.target.value });
-  $(".name").onkeydown = e => { if (e.key === "Enter") e.target.blur(); };
-  const mode = $(".modesel");
-  let scenesLoaded = false;
-  const fillModes = async () => {
-    await effectsReady;
-    const cur = mode.value;
-    let html = `<option value="">—</option>` + (el._gm ? "" : `<optgroup label="Effects">`
-      + EFFECTS.map(e => `<option value="fx:${e.id}">${e.name}</option>`).join("") + `</optgroup>`);
-    if (scenesLoaded) {
-      const scenes = el._scenes || [];
-      if (scenes.length) html += `<optgroup label="Govee scenes">` + scenes.map(n => `<option value="scene:${n.replace(/"/g, "&quot;")}">${n}</option>`).join("") + `</optgroup>`;
-    } else html += `<option value="load" disabled>Govee scenes: loading…</option>`;
-    mode.innerHTML = html; mode.value = cur;
-  };
-  fillModes();
-  el._fillModes = fillModes;
-  $(".gm").onchange = e => { el._gm = e.target.checked; fillModes(); act(id, { action:"govee_modes", on:e.target.checked }); };
-  mode.onfocus = mode.onmousedown = async () => {
-    if (scenesLoaded) return;
-    scenesLoaded = true;
-    try { el._scenes = await (await fetch(`/api/scenes/${encodeURIComponent(id)}`)).json(); } catch { el._scenes = []; }
-    fillModes();
-  };
-  mode.onchange = () => {
-    busy[id] = Date.now();
-    const v = mode.value;
-    if (!v) return act(id, { action:"stop", fade:FADE.effect });
-    if (v.startsWith("fx:")) return act(id, { action:"effect", effect:v.slice(3), fade:FADE.effect });
-    if (v.startsWith("scene:")) return act(id, { action:"scene", name:v.slice(6) });
-  };
-  const zsel = $(".zonesel");
-  zonesReady.then(() => { zsel.innerHTML = ZONES.map(z => `<option value="${z.id}">${z.name}</option>`).join(""); zsel.value = d.zone || "all"; });
-  zsel.onchange = () => { busy[id] = Date.now(); act(id, { action:"screen_zone", zone:zsel.value }); };
-  $(".roomin").onchange = e => act(id, { action:"room", room:e.target.value }).then(refresh);
-  $(".roomin").onkeydown = e => { if (e.key === "Enter") e.target.blur(); };
-  swatchButtons($(".swatches"), s => {
-    act(id, pickBody(s));
-    el.style.setProperty("--glow", s.k ? rgb2hex(k2rgb(s.k)) : s.hex);
-    el.classList.remove("off"); $(".pw").checked = true;
-  });
-  return el;
+const isOn = d => !!(d.online && d.status?.onOff);
+function stateText(d) {
+  if (!d.online) return "Offline";
+  const st = d.status || {};
+  if (!st.onOff) return "Off";
+  const b = `${st.brightness ?? 100}%`;
+  if (d.effect) return `${fxName(d.effect)} · ${b}`;
+  if (d.scene) return `${d.scene} · ${b}`;
+  if (st.colorTemInKelvin > 0) return `${kName(st.colorTemInKelvin)} · ${b}`;
+  return `${hueName(glow(d))} · ${b}`;
 }
 
-function update(el, d) {
-  const $ = s => el.querySelector(s);
-  const st = d.status;
-  el.classList.toggle("offline", !d.online);
-  const cloud = d.via === "cloud";
-  const b = $(".badge");
-  b.className = "badge " + (cloud ? "cloud" : "lan");
-  b.textContent = cloud ? "Cloud" : "Local";
-  b.title = cloud ? "No LAN Control: goes through Govee's servers (slower, rate limited)" : "Controlled directly on your network";
-  $(".meta").innerHTML = `${d.sku || "?"}${cloud ? "" : " · " + (d.ip || "no ip")}${d.online ? "" : " · offline"}`
-    + (d.unconfirmed ? ` · <span class="warn">didn't respond to last command</span>` : "");
-  el.classList.toggle("unconfirmed", !!d.unconfirmed);
-  if (d.kelvin) { $(".kel").min = d.kelvin[0]; $(".kel").max = d.kelvin[1]; }
-  if (document.activeElement !== $(".name")) $(".name").value = d.name || d.id;
-  if (document.activeElement !== $(".roomin")) $(".roomin").value = d.room || "";
-  if (document.activeElement !== $(".zonesel") && ZONES.length) $(".zonesel").value = d.zone || "all";
-  if (!!d.govee_modes !== !!el._gm) { el._gm = !!d.govee_modes; $(".gm").checked = el._gm; el._fillModes(); }
-  const mode = $(".modesel");
-  if (document.activeElement !== mode && Date.now() - (busy[d.id] || 0) > 2500) {
-    const want = d.effect ? "fx:" + d.effect : d.scene ? "scene:" + d.scene : "";
-    if (want.startsWith("scene:") && ![...mode.options].some(o => o.value === want)) {
-      mode.insertAdjacentHTML("beforeend", `<option value="${want.replace(/"/g, "&quot;")}">${d.scene}</option>`);
-    }
-    mode.value = want;
-  }
-  if (Date.now() - (busy[d.id] || 0) < 2500 || !st) return;   // don't fight the user's hand
-  el.classList.toggle("off", !st.onOff);
-  el.style.setProperty("--glow", glowOf(st));
-  $(".pw").checked = !!st.onOff;
-  $(".br").value = st.brightness ?? 100; $(".brv").value = (st.brightness ?? 100) + "%";
-  if (st.colorTemInKelvin > 0) { $(".kel").value = st.colorTemInKelvin; $(".kv").value = st.colorTemInKelvin + "K"; }
-  else { $(".kv").value = "—"; if (st.color) $(".col").value = rgb2hex(st.color); }
+// ======================================================================= live connection
+let es, lastMsg = 0;
+function setConn(cls, text) { const c = $("#conn"); c.className = "conn " + cls; c.lastElementChild.textContent = text; }
+function connect() {
+  try { es?.close(); } catch {}
+  es = new EventSource("/api/events");
+  es.onopen = () => { setConn("live", "Live"); };
+  es.onmessage = e => { lastMsg = Date.now(); setConn("live", "Live"); receive(JSON.parse(e.data)); };
+  es.addEventListener("ping", () => { lastMsg = Date.now(); });
+  es.onerror = () => setConn("down", "Reconnecting…");
+}
+function receive(data) {
+  S = data;
+  applyPending();
+  render();
+}
+setInterval(() => { if (!document.hidden && Date.now() - lastMsg > 40000) connect(); }, 5000);   // dead connection watchdog
+document.addEventListener("visibilitychange", () => { if (!document.hidden && (!es || es.readyState === 2 || Date.now() - lastMsg > 20000)) connect(); });
+connect();
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {});
+
+// ======================================================================= routing
+function go() {
+  view = (location.hash.slice(1) || "home").split("/")[0];
+  if (!["home", "schedule", "settings"].includes(view)) view = "home";
+  document.querySelectorAll("[data-v]").forEach(a => a.classList.toggle("on", a.dataset.v === view));
+  $("#main").innerHTML = "";
+  built = {};
+  render();
+  window.scrollTo(0, 0);
+}
+window.addEventListener("hashchange", go);
+let built = {};
+
+function render() {
+  renderSide();
+  ambient();
+  if (!S.modes) { if (!$("#main").children.length) $("#main").innerHTML = `<div class="empty">Connecting to the lights…</div>`; return; }
+  $(".empty", $("#main"))?.remove();
+  if (view === "home") renderHome();
+  else if (view === "schedule") renderSchedule();
+  else renderSettings();
+  if (sheetTarget) renderSheet();
 }
 
-let lastDevs = [];
-function render(devs) {
-  lastDevs = devs;
-  document.getElementById("count").textContent = devs.length ? `${devs.filter(d => d.online).length} online` : "";
-  const nLan = devs.filter(d => d.via !== "cloud").length, nCloud = devs.length - nLan;
-  document.getElementById("legend").innerHTML = devs.length
-    ? `<span class="badge lan">Local</span><b>${nLan}</b><span class="badge cloud">Cloud</span><b>${nCloud}</b>` : "";
-  const main = document.getElementById("rooms");
-  if (!devs.length) { main.innerHTML = `<div class="empty">No lights found yet. Turn on <b>LAN Control</b> for each light in the Govee app, then hit Scan.</div>`; cards.clear(); sections.clear(); return; }
-  main.querySelector(".empty")?.remove();
-
-  const groups = new Map();
-  for (const d of devs) {
-    const r = d.room || "";
-    if (!groups.has(r)) groups.set(r, []);
-    groups.get(r).push(d);
-  }
-  const names = [...groups.keys()].sort((a, b) => (a === "") - (b === "") || a.localeCompare(b));
-  document.getElementById("roomlist").innerHTML = names.filter(Boolean).map(n => `<option value="${n.replace(/"/g, "&quot;")}">`).join("");
-
-  names.forEach((name, i) => {
-    let sec = sections.get(name);
-    if (!sec) { sec = makeSection(name); sections.set(name, sec); }
-    if (main.children[i] !== sec) main.insertBefore(sec, main.children[i] || null);
-    const list = groups.get(name);
-    sec.querySelector(".n").textContent = `${list.filter(d => d.online).length}/${list.length}`;
-    const g = sec.querySelector(".grid");
-    list.forEach((d, j) => {
-      let el = cards.get(d.id);
-      if (!el) { el = makeCard(d); cards.set(d.id, el); }
-      if (g.children[j] !== el) g.insertBefore(el, g.children[j] || null);
-      update(el, d);
+function renderSide() {
+  const html = roomsOf().map(([r, list]) => `<a class="nav sub" href="#home" data-room="${esc(r)}">${esc(roomLabel(r))}<b>${list.filter(isOn).length}/${list.length}</b></a>`).join("");
+  const box = $("#sideRooms");
+  if (box._h !== html) {
+    box._h = html; box.innerHTML = html;
+    box.querySelectorAll("a").forEach(a => a.onclick = e => {
+      e.preventDefault();
+      if (view !== "home") { location.hash = "home"; setTimeout(() => scrollRoom(a.dataset.room), 60); } else scrollRoom(a.dataset.room);
     });
-  });
-  for (const [name, sec] of sections) if (!groups.has(name)) { sec.remove(); sections.delete(name); }
+  }
+}
+const scrollRoom = r => document.getElementById("room-" + r)?.scrollIntoView({ behavior:"smooth", block:"start" });
+
+function ambient() {
+  const on = S.devices.filter(isOn);
+  if (!on.length) { document.body.style.setProperty("--amb", "transparent"); return; }
+  const c = on.map(glow).reduce((a, b) => a.map((v, i) => v + b[i])).map(v => Math.round(v / on.length));
+  document.body.style.setProperty("--amb", `rgb(${c})`);
 }
 
-const sections = new Map();
-function groupControls(container, target) {
-  const url = `/api/devices/${encodeURIComponent(target)}`;
-  const after = () => setTimeout(refresh, 700);
-  const on = document.createElement("button"); on.textContent = "On";
-  const off = document.createElement("button"); off.textContent = "Off";
-  on.onclick = () => post(url, { action:"power", on:true, fade:FADE.group }).then(after);
-  off.onclick = () => post(url, { action:"power", on:false, fade:FADE.group }).then(after);
-  const br = document.createElement("input");
-  Object.assign(br, { type:"range", min:1, max:100, value:100, title:"Brightness" });
-  br.oninput = () => throttle(url + "br", () => post(url, { action:"brightness", value:+br.value }).then(after));
-  const sw = document.createElement("div"); sw.className = "swatches";
-  swatchButtons(sw, s => post(url, pickBody(s, FADE.group)).then(after));
-  const fx = document.createElement("select");
-  fx.title = "Run an effect across these lights";
-  effectsReady.then(() => {
-    fx.innerHTML = `<option value="">Effect…</option>` + EFFECTS.map(e => `<option value="${e.id}">${e.name}</option>`).join("");
-  });
-  fx.onchange = () => { if (fx.value) post(url, { action:"effect", effect:fx.value, fade:FADE.effect }).then(after); fx.value = ""; };
-  const stop = document.createElement("button"); stop.textContent = "Stop";
-  stop.title = "Stop effects and go back to what the lights were doing";
-  stop.onclick = () => post(url, { action:"stop", fade:FADE.effect }).then(after);
-  container.append(on, off, br, sw, fx, stop);
+// ======================================================================= modes & schedule maths
+const modeById = id => S.modes.modes.find(m => m.id === id);
+const modeName = id => modeById(id)?.name || id || "—";
+function modeColors(m) {
+  const out = [];
+  for (const s of m?.steps || []) {
+    const b = s.body || {};
+    if (b.action === "kelvin") out.push(hex(k2rgb(b.value)));
+    else if (b.action === "color") out.push(hex([b.r, b.g, b.b]));
+    else if (b.action === "effect") out.push(...(FXP[b.effect] || []).slice(0, 3));
+    else if (b.action === "scene") out.push("#ff9a3c");
+  }
+  return [...new Set(out)].slice(0, 4);
 }
-function makeSection(name) {
+function modeGrad(m) {
+  const c = modeColors(m);
+  return !c.length ? "linear-gradient(90deg,#2a2d36,#1d2028)" : c.length === 1 ? `linear-gradient(90deg,${c[0]},${c[0]}cc)` : `linear-gradient(90deg,${c.join(",")})`;
+}
+const modeSolid = m => modeColors(m)[0] || "#2a2d36";
+const when = iso => {
+  const d = new Date(iso), t = d.toLocaleTimeString([], { hour:"numeric", minute:"2-digit" });
+  return d.toDateString() === new Date().toDateString() ? t : `${d.toLocaleDateString([], { weekday:"short" })} ${t}`;
+};
+function weekEvents(entries) {
+  const ev = [];
+  for (const e of entries || []) {
+    const [h, m] = String(e.time || "0:0").split(":").map(Number);
+    for (const d of e.days || []) ev.push({ t:d * 1440 + h * 60 + m, mode:e.mode });
+  }
+  return ev.sort((a, b) => a.t - b.t);
+}
+function daySegments(entries, day) {
+  const ev = weekEvents(entries);
+  if (!ev.length) return [];
+  const start = day * 1440;
+  let cur = ev[ev.length - 1];
+  for (const e of ev) if (e.t <= start) cur = e;
+  const segs = []; let t = 0, mode = cur.mode;
+  for (const e of ev) if (e.t > start && e.t < start + 1440) { segs.push({ from:t, to:e.t - start, mode }); t = e.t - start; mode = e.mode; }
+  segs.push({ from:t, to:1440, mode });
+  return segs.filter(s => s.to > s.from);
+}
+function timeline(entries, day, now) {
+  const segs = daySegments(entries, day);
+  return `<div class="tl">${segs.map(s => {
+    const w = (s.to - s.from) / 14.4, m = modeById(s.mode);
+    const [r, g, b] = unhex(modeSolid(m)), light = (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.62;
+    return `<span style="width:${w}%;background:${modeGrad(m)}${light ? ";color:#1a1408;text-shadow:none" : ""}" title="${esc(modeName(s.mode))}">${w > 9 ? esc(modeName(s.mode)) : ""}</span>`;
+  }).join("")}${now != null ? `<i class="now" style="left:${now / 14.4}%"></i>` : ""}</div>`;
+}
+const todayIdx = () => (new Date().getDay() + 6) % 7;
+const minutesNow = () => { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); };
+
+// ======================================================================= home
+function renderHome() {
+  const main = $("#main");
+  if (!built.home) {
+    built.home = true;
+    main.innerHTML = `<div class="view">
+      <div class="hello" id="hello"></div>
+      <div class="hero"><h1 id="heroMode"></h1><span class="st" id="heroSt"></span><button class="chip amber" id="resume" hidden>Back to schedule</button></div>
+      <div class="modes" id="modes"></div>
+      <div class="day" id="day"></div>
+      <div id="rooms"></div></div>`;
+    $("#resume").onclick = () => { buzz(); fetch("/api/mode/resume"); };
+  }
+  const M = S.modes;
+  const h = new Date().getHours();
+  $("#hello").textContent = h < 5 ? "Good night" : h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : h < 22 ? "Good evening" : "Good night";
+  $("#heroMode").textContent = M.active ? modeName(M.active) : "Lights";
+  const st = $("#heroSt");
+  st.classList.toggle("ov", !!M.override);
+  st.textContent = M.override ? `Override${M.override.until ? " until " + when(M.override.until) : ""}`
+    : M.schedule.enabled ? (M.next ? `Then ${modeName(M.next.mode)} at ${when(M.next.at)}` : "On schedule") : "Schedule off";
+  $("#resume").hidden = !M.override;
+
+  // mode cards
+  const mk = JSON.stringify([M.modes, M.active, M.scheduled]);
+  const box = $("#modes");
+  if (box._k !== mk) {
+    box._k = mk;
+    box.innerHTML = M.modes.map(m => `<button class="mode${m.id === M.active ? " on" : ""}" data-id="${esc(m.id)}" style="--mg:${modeGrad(m)}">
+      <span class="mg"></span><b>${esc(m.name)}</b><small>${m.id === M.active ? "On now" : m.scope?.startsWith("room:") ? esc(m.scope.slice(5) || "Other") : "Everywhere"}</small></button>`).join("");
+    box.querySelectorAll(".mode").forEach(b => b.onclick = () => {
+      buzz();
+      S.modes.active = b.dataset.id; box._k = null; renderHome();
+      post(`/api/modes/${encodeURIComponent(b.dataset.id)}/activate`);
+    });
+  }
+
+  // today's schedule
+  const dk = JSON.stringify([M.schedule, M.modes, minutesNow()]);
+  const day = $("#day");
+  if (day._k !== dk) {
+    day._k = dk;
+    day.innerHTML = M.schedule.enabled && M.schedule.entries.length
+      ? timeline(M.schedule.entries, todayIdx(), minutesNow()) + `<div class="ticks"><span>12a</span><span>6a</span><span>12p</span><span>6p</span><span>12a</span></div>` : "";
+  }
+
+  // rooms
+  const rooms = $("#rooms");
+  if (!S.devices.length) { rooms.innerHTML = `<div class="empty">No lights yet. Turn on <b>LAN Control</b> for each light in the Govee app, then scan in <a href="#settings" style="color:inherit">Settings</a>.</div>`; return; }
+  rooms.querySelector(".empty")?.remove();
+  const seen = new Set();
+  roomsOf().forEach(([r, list], i) => {
+    seen.add(r);
+    let sec = document.getElementById("room-" + r);
+    if (!sec) sec = makeRoom(r);
+    if (rooms.children[i] !== sec) rooms.insertBefore(sec, rooms.children[i] || null);
+    updateRoom(sec, r, list);
+  });
+  [...rooms.children].forEach(s => { if (!seen.has(s._room)) s.remove(); });
+}
+
+function makeRoom(r) {
   const sec = document.createElement("section");
-  sec.className = "room";
-  sec.innerHTML = `<div class="room-head"><h2></h2></div><div class="grid"></div>`;
-  const h = sec.querySelector("h2");
-  h.textContent = name || "Unassigned";
-  const n = document.createElement("span"); n.className = "n"; h.appendChild(n);
-  groupControls(sec.querySelector(".room-head"), "room:" + name);
+  sec.className = "room"; sec.id = "room-" + r; sec._room = r;
+  sec.innerHTML = `<div class="rhead"><h2>${esc(roomLabel(r))}</h2><span class="rm"></span><span class="sp"></span>
+    <div class="slider rsl"><div class="fill"></div><span class="lbl"></span></div>
+    <button class="chip rmore">Colors &amp; effects</button><button class="switch rpw" aria-label="Room power"></button></div><div class="tiles"></div>`;
+  const target = "room:" + r;
+  $(".rpw", sec).onclick = () => {
+    buzz();
+    const on = !$(".rpw", sec).classList.contains("on");
+    optimistic(target, { onOff:on ? 1 : 0 });
+    act(target, { action:"power", on, fade:1.0 });
+  };
+  sec._sl = slider($(".rsl", sec), v => { optimistic(target, { brightness:v, onOff:1 }); throttle(target + "b", () => act(target, { action:"brightness", value:v })); });
+  $(".rmore", sec).onclick = () => openSheet(target);
   return sec;
 }
 
-async function refresh() {
-  try { render(await (await fetch("/api/devices")).json()); } catch {}
+function updateRoom(sec, r, list) {
+  const on = list.filter(isOn);
+  $(".rm", sec).textContent = on.length ? `${on.length} of ${list.length} on` : "All off";
+  $(".rpw", sec).classList.toggle("on", on.length > 0);
+  const avg = on.length ? Math.round(on.reduce((a, d) => a + (d.status.brightness ?? 100), 0) / on.length) : 0;
+  sec._sl.set(avg, on.length ? `${avg}%` : "Off");
+  const tiles = $(".tiles", sec);
+  list.forEach((d, j) => {
+    let t = tiles.querySelector(`[data-id="${CSS.escape(d.id)}"]`);
+    if (!t) t = makeTile(d.id);
+    if (tiles.children[j] !== t) tiles.insertBefore(t, tiles.children[j] || null);
+    updateTile(t, d);
+  });
+  [...tiles.children].forEach(t => { if (!list.some(d => d.id === t.dataset.id)) t.remove(); });
 }
 
-document.getElementById("scan").onclick = async e => {
-  e.target.textContent = "Scanning…"; e.target.disabled = true;
-  try { render(await (await post("/api/scan")).json()); } finally { e.target.textContent = "Scan for lights"; e.target.disabled = false; }
-};
-groupControls(document.getElementById("allBar"), "all");
-
-// ================= modes, schedule, override =================
-const $id = x => document.getElementById(x);
-const DAYS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
-let M = null;                 // /api/modes status
-let draft = null;             // schedule rows being edited
-const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" })[c]);
-const modeName = id => (M.modes.find(m => m.id === id) || {}).name || id;
-const when = iso => {
-  const d = new Date(iso), today = new Date();
-  const t = d.toLocaleTimeString([], { hour:"numeric", minute:"2-digit" });
-  return d.toDateString() === today.toDateString() ? t : `${d.toLocaleDateString([], { weekday:"short" })} ${t}`;
-};
-
-async function loadModes() {
-  try { M = await (await fetch("/api/modes")).json(); renderModeBar(); } catch {}
-}
-const useStatus = r => r.json().then(s => { M = s; renderModeBar(); if (!$id("panel").hidden) renderPanel(false); });
-
-function renderModeBar() {
-  const box = $id("modeBtns");
-  box.innerHTML = "";
-  for (const m of M.modes) {
-    const b = document.createElement("button");
-    b.className = "pill" + (m.id === M.active ? " active" : "");
-    b.textContent = m.name;
-    b.onclick = () => post(`/api/modes/${encodeURIComponent(m.id)}/activate`).then(useStatus).then(() => setTimeout(refresh, 900));
-    box.appendChild(b);
-  }
-  const st = $id("modeStatus");
-  st.classList.toggle("ov", !!M.override);
-  if (M.override) st.textContent = `Override: ${modeName(M.override.mode)}` + (M.override.until ? ` until ${when(M.override.until)}` : "");
-  else if (M.schedule.enabled) st.textContent = "On schedule" + (M.next ? ` · ${modeName(M.next.mode)} at ${when(M.next.at)}` : "");
-  else st.textContent = "Schedule off";
-  $id("resumeBtn").hidden = !M.override;
-}
-$id("resumeBtn").onclick = () => fetch("/api/mode/resume").then(useStatus).then(() => setTimeout(refresh, 900));
-$id("panelBtn").onclick = () => { const p = $id("panel"); p.hidden = !p.hidden; if (!p.hidden) renderPanel(true); };
-
-function scopes() {
-  const rooms = [...new Set(lastDevs.map(d => d.room).filter(Boolean))].sort();
-  return [["all", "All lights"], ...rooms.map(r => ["room:" + r, r])];
-}
-const scopeSelect = (cls, cur) => `<select class="${cls}">` + scopes().map(([v, l]) => `<option value="${esc(v)}"${v === cur ? " selected" : ""}>${esc(l)}</option>`).join("") + `</select>`;
-
-function renderPanel(fresh) {
-  if (fresh || !draft) draft = JSON.parse(JSON.stringify(M.schedule.entries));
-  const p = $id("panel");
-  p.innerHTML = `
-    <h3>Schedule</h3>
-    <label class="srow"><input type="checkbox" id="schedOn"${M.schedule.enabled ? " checked" : ""}> Run the schedule</label>
-    <div id="srows"></div>
-    <div class="srow"><button id="addRow">+ Add time</button><button id="saveSched" class="primary">Save schedule</button><span id="saved" class="mstatus"></span></div>
-    <p class="hint">Each line switches to a mode at that time on the ticked days, and it stays until the next line.
-      Switching modes by hand (the buttons above or your Stream Deck) overrides the schedule until its next change; <b>Resume schedule</b> ends an override early.</p>
-
-    <h3>Modes</h3>
-    <div id="mrows"></div>
-    <div class="mrow"><input type="text" id="newName" placeholder="New mode name"> ${scopeSelect("newScope", "room:Office")}
-      <button id="newMode">Save current lights as new mode</button></div>
-    <p class="hint">Set the lights how you want them, then <b>Save current lights</b> on a mode: it remembers power, brightness, colour or white, effects and Govee scenes for the lights in the chosen room.</p>
-
-    <h3>Stream Deck</h3>
-    <p class="hint">Add a button that calls one of these in the background (Elgato's <b>Website</b> action with “GET request in background” ticked, or a plugin like API Ninja):</p>
-    <div class="srow"><code>${location.origin}/api/mode/cycle?modes=office,chill,off</code> <span class="mstatus">Office → Chill → Off → …</span></div>
-    <div class="srow"><code>${location.origin}/api/mode/toggle/watching</code> <span class="mstatus">Watching on / back to what was on before</span></div>
-    ${M.modes.map(m => `<div class="srow"><code>${location.origin}/api/mode/${esc(m.id)}</code> <span class="mstatus">${esc(m.name)}</span></div>`).join("")}
-    <div class="srow"><code>${location.origin}/api/mode/resume</code> <span class="mstatus">Resume schedule</span></div>`;
-
-  // schedule rows
-  const srows = $id("srows");
-  const drawRows = () => {
-    srows.innerHTML = "";
-    if (!draft.length) srows.innerHTML = `<div class="mstatus">No times yet.</div>`;
-    draft.forEach((e, idx) => {
-      const row = document.createElement("div");
-      row.className = "srow";
-      row.innerHTML = DAYS.map((d, i) => `<button class="day${e.days.includes(i) ? " on" : ""}" data-d="${i}">${d}</button>`).join("")
-        + `<input type="time" value="${esc(e.time)}">`
-        + `<select>${M.modes.map(m => `<option value="${esc(m.id)}"${m.id === e.mode ? " selected" : ""}>${esc(m.name)}</option>`).join("")}</select>`
-        + `<button class="x" title="Remove">✕</button>`;
-      row.querySelectorAll(".day").forEach(b => b.onclick = () => {
-        const d = +b.dataset.d;
-        e.days = e.days.includes(d) ? e.days.filter(x => x !== d) : [...e.days, d].sort();
-        b.classList.toggle("on");
-      });
-      row.querySelector("input").onchange = ev => e.time = ev.target.value;
-      row.querySelector("select").onchange = ev => e.mode = ev.target.value;
-      row.querySelector(".x").onclick = () => { draft.splice(idx, 1); drawRows(); };
-      srows.appendChild(row);
-    });
+function makeTile(id) {
+  const t = document.createElement("div");
+  t.className = "tile"; t.dataset.id = id; t.tabIndex = 0; t.setAttribute("role", "button");
+  t.innerHTML = `<span class="bulb">${ICON_BULB}</span><div class="tt"><b></b><small></small></div><button class="more" aria-label="Controls">${ICON_MORE}</button><span class="bar"><i></i></span>`;
+  let press, long = false;
+  const toggle = () => {
+    const d = devById(id);
+    if (!d?.online) return toast(`${d?.name || "That light"} is offline`);
+    buzz();
+    const on = !isOn(d);
+    optimistic(id, { onOff:on ? 1 : 0 });
+    act(id, { action:"power", on, fade:0.8 });
   };
-  drawRows();
-  $id("addRow").onclick = () => { draft.push({ days:[0,1,2,3,4], time:"09:00", mode:M.modes[0]?.id }); drawRows(); };
-  $id("saveSched").onclick = () => post("/api/schedule", { enabled:$id("schedOn").checked, entries:draft })
-    .then(useStatus).then(() => { $id("saved").textContent = "Saved"; setTimeout(refresh, 900); });
+  t.onpointerdown = e => { if (e.target.closest(".more")) return; long = false; press = setTimeout(() => { long = true; buzz(); openSheet(id); }, 480); };
+  t.onpointerup = t.onpointerleave = t.onpointercancel = () => clearTimeout(press);
+  t.onclick = e => { if (e.target.closest(".more")) return openSheet(id); if (long) return; toggle(); };
+  t.oncontextmenu = e => { e.preventDefault(); clearTimeout(press); if (!long) openSheet(id); };
+  t.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); } };
+  return t;
+}
 
-  // mode rows
-  const mrows = $id("mrows");
-  for (const m of M.modes) {
-    const row = document.createElement("div");
-    row.className = "mrow";
-    row.innerHTML = `<span class="mname">${esc(m.name)}</span> ${scopeSelect("scope", m.scope || "room:Office")}
-      <button class="cap">Save current lights</button><button class="del x">Delete</button><span class="mstatus msg"></span>`;
-    row.querySelector(".cap").onclick = () => post(`/api/modes/${encodeURIComponent(m.id)}/capture`, { scope:row.querySelector(".scope").value })
-      .then(r => r.json()).then(s => { M = s; row.querySelector(".msg").textContent = "Saved from current lights"; });
-    const del = row.querySelector(".del");
-    del.onclick = () => {
-      if (del.dataset.armed) return post(`/api/modes/${encodeURIComponent(m.id)}/delete`).then(useStatus).then(() => renderPanel(true));
-      del.dataset.armed = 1; del.textContent = "Really delete?";
-      setTimeout(() => { delete del.dataset.armed; del.textContent = "Delete"; }, 3000);
+function updateTile(t, d) {
+  const c = glow(d), on = isOn(d);
+  t.classList.toggle("on", on);
+  t.classList.toggle("offline", !d.online);
+  t.classList.toggle("bad", !!d.unconfirmed);
+  t.classList.toggle("anim", on && !!(d.effect || d.scene));
+  t.style.setProperty("--c", `rgb(${c})`);
+  t.style.setProperty("--cr", c.join(","));
+  t.style.setProperty("--b", `${d.status?.brightness ?? 0}%`);
+  t.style.setProperty("--fx", d.effect ? fxGrad(d.effect) : "linear-gradient(90deg,#ff9a3c,#ff5e62,#ffcf6b,#ff9a3c)");
+  $("b", t).textContent = d.name || d.id;
+  $("small", t).textContent = d.unconfirmed ? "Not responding" : stateText(d);
+}
+
+// ======================================================================= slider / wheel widgets
+function slider(el, onInput, { min = 1, max = 100 } = {}) {
+  const fill = $(".fill", el), lbl = $(".lbl", el);
+  let dragging = false, val = 0;
+  const setv = (v, text) => { val = v; el.style.setProperty("--v", `${clamp((v - min) / (max - min), 0, 1) * 100}%`); lbl.textContent = text ?? `${v}%`; lbl.classList.toggle("light", (v - min) / (max - min) < 0.18); };
+  const at = e => { const r = el.getBoundingClientRect(); return Math.round(min + clamp((e.clientX - r.left) / r.width, 0, 1) * (max - min)); };
+  el.onpointerdown = e => { dragging = true; el.classList.add("drag"); el.setPointerCapture(e.pointerId); const v = at(e); setv(v); onInput(v); };
+  el.onpointermove = e => { if (!dragging) return; const v = at(e); if (v !== val) { setv(v); onInput(v); } };
+  el.onpointerup = el.onpointercancel = () => { dragging = false; el.classList.remove("drag"); };
+  return { set:(v, text) => { if (!dragging) setv(v, text); }, get dragging() { return dragging; } };
+}
+function drag(el, onPoint) {
+  let on = false;
+  el.onpointerdown = e => { on = true; el.classList.add("drag"); el.setPointerCapture(e.pointerId); onPoint(e, true); };
+  el.onpointermove = e => { if (on) onPoint(e, false); };
+  el.onpointerup = el.onpointercancel = e => { if (on) { on = false; el.classList.remove("drag"); onPoint(e, false, true); } };
+  return () => on;
+}
+
+// ======================================================================= controls sheet
+let sheetTarget = null, sheetTab = null, sheetParts = null;
+const scenesCache = {};
+const PRESETS = ["#ff3b30", "#ff7a1a", "#ffb340", "#30d158", "#00d0c0", "#0a84ff", "#5e5ce6", "#bf5af2", "#ff2d92"];
+const WHITES = [[2200, "Candle"], [2700, "Warm"], [3500, "Soft"], [4000, "Neutral"], [5000, "Daylight"], [6500, "Cool"]];
+
+function sheetDevs() { return sheetTarget.startsWith("room:") || sheetTarget === "all" ? S.devices.filter(d => idsOf(sheetTarget).includes(d.id)) : [devById(sheetTarget)].filter(Boolean); }
+function lead() { const ds = sheetDevs(); return ds.find(isOn) || ds[0]; }
+
+function openSheet(target) {
+  sheetTarget = target; sheetParts = null;
+  const d = lead();
+  sheetTab = !d ? "color" : d.effect ? "fx" : d.scene ? "scenes" : d.status?.colorTemInKelvin > 0 ? "white" : "color";
+  $("#scrim").classList.add("on"); $("#sheet").classList.add("on"); $("#sheet").setAttribute("aria-hidden", "false");
+  $("#sheet").style.transform = "";
+  buildSheet();
+  renderSheet();
+}
+function closeSheet() {
+  sheetTarget = null;
+  $("#scrim").classList.remove("on"); $("#sheet").classList.remove("on"); $("#sheet").setAttribute("aria-hidden", "true");
+}
+$("#scrim").onclick = closeSheet;
+$("#sClose").onclick = closeSheet;
+document.addEventListener("keydown", e => { if (e.key === "Escape" && sheetTarget) closeSheet(); });
+$("#sPower").onclick = () => {
+  buzz();
+  const on = !$("#sPower").classList.contains("on");
+  optimistic(sheetTarget, { onOff:on ? 1 : 0 });
+  act(sheetTarget, { action:"power", on, fade:0.8 });
+};
+// phone: drag the sheet down to close
+(() => {
+  const z = $("#grabzone"), sh = $("#sheet");
+  let y0 = null, dy = 0;
+  z.addEventListener("pointerdown", e => { if (innerWidth > 820 || e.target.closest("button")) return; y0 = e.clientY; dy = 0; sh.style.transition = "none"; z.setPointerCapture(e.pointerId); });
+  z.addEventListener("pointermove", e => { if (y0 == null) return; dy = Math.max(0, e.clientY - y0); sh.style.transform = `translateY(${dy}px)`; });
+  const end = () => { if (y0 == null) return; y0 = null; sh.style.transition = ""; sh.style.transform = ""; if (dy > 90) closeSheet(); };
+  z.addEventListener("pointerup", end); z.addEventListener("pointercancel", end);
+})();
+
+function buildSheet() {
+  const isDev = !sheetTarget.startsWith("room:") && sheetTarget !== "all";
+  const d = isDev ? devById(sheetTarget) : null;
+  const gm = !!d?.govee_modes;
+  const tabs = [["color", "Color"], ["white", "White"], ["fx", "Effects"]].concat(isDev ? [["scenes", "Scenes"]] : []);
+  if (!tabs.some(t => t[0] === sheetTab)) sheetTab = "color";
+  const body = $("#sBody");
+  body.innerHTML = `
+    <div class="slider sbr" style="--sc:#e8e9ee"><div class="fill"></div><span class="lbl"></span></div>
+    <div class="seg">${tabs.map(([k, n]) => `<button data-t="${k}" class="${k === sheetTab ? "on" : ""}">${n}</button>`).join("")}</div>
+    <div data-p="color"${sheetTab === "color" ? "" : " hidden"}>
+      <div class="wheel"><span class="thumb"></span></div>
+      <div class="dots">${PRESETS.map(c => `<button class="dot" data-c="${c}" style="background:${c}" aria-label="${c}"></button>`).join("")}</div>
+    </div>
+    <div data-p="white"${sheetTab === "white" ? "" : " hidden"}>
+      <div class="ktrack"><span class="thumb"></span></div><div class="kl"><span></span><span></span></div>
+      <div class="wl">${WHITES.map(([k, n]) => `<button data-k="${k}"><i style="background:${hex(k2rgb(k))}"></i>${n}</button>`).join("")}</div>
+    </div>
+    <div data-p="fx"${sheetTab === "fx" ? "" : " hidden"}>
+      <div class="fxg">${EFFECTS.filter(e => !gm || e.id === "screen").map(e => `<button class="fx" data-fx="${esc(e.id)}" style="--g:${fxGrad(e.id)}"><i></i>${esc(e.id === "screen" ? "Screen sync" : e.name)}</button>`).join("")}</div>
+      ${gm ? `<p class="note">This light is set to use Govee's own scenes for effects; pick one in <b>Scenes</b>. Screen sync still streams.</p>` : ""}
+      <button class="stopfx" hidden>Stop effect</button>
+    </div>
+    <div data-p="scenes"${sheetTab === "scenes" ? "" : " hidden"}>
+      <input class="search" placeholder="Search Govee scenes" spellcheck="false"><div class="scl"><div class="note">Loading scenes…</div></div>
+    </div>`;
+  body.querySelectorAll(".seg button").forEach(b => b.onclick = () => {
+    sheetTab = b.dataset.t;
+    body.querySelectorAll(".seg button").forEach(x => x.classList.toggle("on", x === b));
+    body.querySelectorAll("[data-p]").forEach(p => p.hidden = p.dataset.p !== sheetTab);
+    if (sheetTab === "scenes") loadScenes();
+  });
+  const T = () => sheetTarget;
+  // brightness
+  const br = slider($(".sbr", body), v => { optimistic(T(), { brightness:v, onOff:1 }); throttle(T() + "b", () => act(T(), { action:"brightness", value:v })); });
+  // color wheel
+  const wheel = $(".wheel", body);
+  const wheelDragging = drag(wheel, (e, first, last) => {
+    const r = wheel.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    const dx = e.clientX - cx, dy = e.clientY - cy;
+    const hue = (Math.atan2(dx, -dy) * 180 / Math.PI + 360) % 360, sat = clamp(Math.hypot(dx, dy) / (r.width / 2), 0, 1);
+    const rgb = hsv2rgb(hue, sat, 1);
+    placeWheel(rgb);
+    optimistic(T(), { color:{ r:rgb[0], g:rgb[1], b:rgb[2] }, colorTemInKelvin:0, onOff:1 }, { effect:null, scene:null });
+    throttle(T() + "c", () => act(T(), { action:"color", r:rgb[0], g:rgb[1], b:rgb[2], ...(first ? { fade:0.5 } : {}) }), last ? 0 : 110);
+  });
+  const placeWheel = rgb => {
+    const [h, s] = rgb2hsv(rgb), th = $(".thumb", wheel), a = h * Math.PI / 180;
+    th.style.left = `${50 + Math.sin(a) * s * 50}%`; th.style.top = `${50 - Math.cos(a) * s * 50}%`; th.style.background = `rgb(${rgb})`;
+  };
+  body.querySelectorAll(".dot").forEach(b => b.onclick = () => {
+    buzz(); const rgb = unhex(b.dataset.c);
+    optimistic(T(), { color:{ r:rgb[0], g:rgb[1], b:rgb[2] }, colorTemInKelvin:0, onOff:1 }, { effect:null, scene:null });
+    act(T(), { action:"color", r:rgb[0], g:rgb[1], b:rgb[2], fade:0.7 });
+  });
+  // white
+  const kr = d?.kelvin || [2000, 9000];
+  const ktrack = $(".ktrack", body);
+  const steps = 8, kAt = f => Math.round((kr[0] + f * (kr[1] - kr[0])) / 50) * 50;
+  ktrack.style.background = `linear-gradient(90deg,${[...Array(steps + 1)].map((_, i) => hex(k2rgb(kAt(i / steps)))).join(",")})`;
+  const kl = body.querySelectorAll(".kl span"); kl[0].textContent = `${kr[0]}K`; kl[1].textContent = `${kr[1]}K`;
+  const kDragging = drag(ktrack, (e, first, last) => {
+    const r = ktrack.getBoundingClientRect(), k = kAt(clamp((e.clientX - r.left) / r.width, 0, 1));
+    placeK(k);
+    optimistic(T(), { colorTemInKelvin:k, onOff:1 }, { effect:null, scene:null });
+    throttle(T() + "k", () => act(T(), { action:"kelvin", value:k, ...(first ? { fade:0.5 } : {}) }), last ? 0 : 110);
+  });
+  const placeK = k => {
+    ktrack.classList.toggle("off", !k);
+    if (!k) return;
+    const th = $(".thumb", ktrack); th.style.left = `${clamp((k - kr[0]) / (kr[1] - kr[0]), 0, 1) * 100}%`; th.style.background = hex(k2rgb(k));
+  };
+  body.querySelectorAll(".wl button").forEach(b => b.onclick = () => {
+    buzz(); const k = clamp(+b.dataset.k, kr[0], kr[1]);
+    optimistic(T(), { colorTemInKelvin:k, onOff:1 }, { effect:null, scene:null });
+    act(T(), { action:"kelvin", value:k, fade:0.7 });
+  });
+  // effects
+  body.querySelectorAll(".fx").forEach(b => b.onclick = () => {
+    buzz();
+    optimistic(T(), { onOff:1 }, { effect:b.dataset.fx, scene:null });
+    act(T(), { action:"effect", effect:b.dataset.fx, fade:1.5 });
+  });
+  $(".stopfx", body).onclick = () => { buzz(); optimistic(T(), {}, { effect:null }); act(T(), { action:"stop", fade:1.5 }); };
+  // scenes
+  $(".search", body).oninput = () => drawScenes();
+  sheetParts = { br, placeWheel, wheelDragging, placeK, kDragging, isDev };
+  if (sheetTab === "scenes") loadScenes();
+  $("#sFoot").innerHTML = isDev ? `<span>${esc(d?.sku || "")}${d?.via === "cloud" ? " · Cloud" : ""}</span><a href="#settings/${encodeURIComponent(sheetTarget)}">Light settings →</a>`
+    : `<span>${idsOf(sheetTarget).length} lights</span><a href="#schedule">Save as a mode →</a>`;
+  $("#sFoot a").onclick = () => closeSheet();
+}
+
+async function loadScenes() {
+  if (!sheetParts?.isDev) return;
+  const id = sheetTarget;
+  if (!scenesCache[id]) {
+    try { scenesCache[id] = await (await fetch(`/api/scenes/${encodeURIComponent(id)}`)).json(); } catch { scenesCache[id] = []; }
+  }
+  if (sheetTarget === id) drawScenes();
+}
+function drawScenes() {
+  const box = $("#sBody .scl"); if (!box) return;
+  const list = scenesCache[sheetTarget];
+  if (!list) return;
+  const q = $("#sBody .search").value.trim().toLowerCase();
+  const cur = devById(sheetTarget)?.scene;
+  const shown = list.filter(n => n.toLowerCase().includes(q));
+  box.innerHTML = !list.length ? `<div class="note">No Govee scenes for this light (scenes come from the cloud API).</div>`
+    : shown.map(n => `<button class="${n === cur ? "on" : ""}" data-s="${esc(n)}">${esc(n)}</button>`).join("") || `<div class="note">Nothing matches.</div>`;
+  box.querySelectorAll("button").forEach(b => b.onclick = () => {
+    buzz();
+    optimistic(sheetTarget, { onOff:1 }, { scene:b.dataset.s, effect:null });
+    act(sheetTarget, { action:"scene", name:b.dataset.s });
+    drawScenes();
+  });
+}
+
+function renderSheet() {
+  const ds = sheetDevs(); const d = lead();
+  if (!d || !sheetParts) return;
+  const isDev = sheetParts.isDev;
+  const on = ds.some(isOn), c = glow(d);
+  $("#sTitle").textContent = isDev ? d.name : sheetTarget === "all" ? "All lights" : roomLabel(sheetTarget.slice(5));
+  $("#sSub").textContent = isDev ? (d.unconfirmed ? "Not responding" : stateText(d)) : `${ds.filter(isOn).length} of ${ds.length} on`;
+  const bulb = $("#sBulb");
+  bulb.innerHTML = ICON_BULB;
+  bulb.style.background = on ? (d.effect ? fxGrad(d.effect) : `rgb(${c})`) : "";
+  bulb.style.boxShadow = on ? `0 0 24px rgba(${c},.55)` : "";
+  $("#sPower").classList.toggle("on", on);
+  $("#sPower").style.setProperty("--sw", on ? `rgb(${c})` : "");
+  const st = d.status || {};
+  const onDs = ds.filter(isOn);
+  const bv = onDs.length ? Math.round(onDs.reduce((a, x) => a + (x.status.brightness ?? 100), 0) / onDs.length) : 0;
+  sheetParts.br.set(bv || 1, on ? `${bv}%` : "Off");
+  $("#sBody .sbr").style.setProperty("--sc", on ? `rgb(${c.map(v => Math.round(v * 0.6 + 232 * 0.4))})` : "#4a4e5a");
+  if (!sheetParts.wheelDragging()) sheetParts.placeWheel(st.colorTemInKelvin > 0 || !st.color ? [255, 255, 255] : c);
+  if (!sheetParts.kDragging()) sheetParts.placeK(st.colorTemInKelvin || 0);
+  const plain = !d.effect && !d.scene;
+  document.querySelectorAll("#sBody .dot").forEach(b => b.classList.toggle("on", plain && !(st.colorTemInKelvin > 0) && b.dataset.c === hex(c)));
+  document.querySelectorAll("#sBody .wl button").forEach(b => b.classList.toggle("on", plain && +b.dataset.k === st.colorTemInKelvin));
+  const fxs = new Set(ds.map(x => x.effect).filter(Boolean));
+  document.querySelectorAll("#sBody .fx").forEach(b => b.classList.toggle("on", fxs.has(b.dataset.fx)));
+  $("#sBody .stopfx").hidden = !fxs.size && !ds.some(x => x.scene);
+  if (sheetTab === "scenes") document.querySelectorAll("#sBody .scl button").forEach(b => b.classList.toggle("on", b.dataset.s === d.scene));
+}
+
+// ======================================================================= schedule page
+let draft = null, dirty = false;
+function renderSchedule() {
+  const M = S.modes;
+  const main = $("#main");
+  if (!built.schedule) {
+    built.schedule = true; draft = null; dirty = false;
+    main.innerHTML = `<div class="view">
+      <h1 class="page">Schedule</h1><p class="sub">Modes switch on by themselves through the week. Picking a mode by hand overrides it until the next change.</p>
+      <div class="card"><div class="ch"><h2>This week</h2><span class="sp"></span><small>Run the schedule</small><button class="switch" id="schedOn"></button></div><div class="week" id="week"></div></div>
+      <div class="card"><div class="ch"><h2>Times</h2><span class="sp"></span><button class="btn" id="addRow">Add a time</button><button class="btn primary" id="saveSched" disabled>Save</button></div><div id="entries"></div></div>
+      <div class="card"><div class="ch"><h2>Modes</h2><span class="sp"></span><small>Set the lights how you like, then save them into a mode.</small></div><div id="mrows"></div>
+        <div class="mrow"><input class="in" id="newName" placeholder="New mode name" style="flex:1;min-width:160px"><select class="in" id="newScope"></select><button class="btn" id="newMode">Save current lights as new mode</button></div></div>
+      <div class="card"><div class="ch"><h2>Stream Deck &amp; shortcuts</h2></div><div id="urls"></div>
+        <p class="help">Use Elgato's <b>Website</b> action with "GET request in background" ticked, or any button that can open a URL.</p></div></div>`;
+    $("#schedOn").onclick = () => { buzz(); const on = !$("#schedOn").classList.contains("on"); $("#schedOn").classList.toggle("on", on); post("/api/schedule", { enabled:on, entries:dirty ? draft : S.modes.schedule.entries }).then(() => { dirty = false; $("#saveSched").disabled = true; }); };
+    $("#addRow").onclick = () => { draft.push({ days:[0, 1, 2, 3, 4], time:"09:00", mode:S.modes.modes[0]?.id }); markDirty(); drawEntries(); };
+    $("#saveSched").onclick = () => post("/api/schedule", { enabled:$("#schedOn").classList.contains("on"), entries:draft }).then(() => { dirty = false; $("#saveSched").disabled = true; toast("Schedule saved"); });
+    $("#newMode").onclick = () => {
+      const name = $("#newName").value.trim();
+      if (!name) return $("#newName").focus();
+      post("/api/modes", { name, scope:$("#newScope").value }).then(r => r.ok ? (toast(`Saved “${name}”`), $("#newName").value = "") : toast("Couldn't save that mode"));
     };
-    mrows.appendChild(row);
   }
-  $id("newMode").onclick = () => {
-    const name = $id("newName").value.trim();
-    if (name) post("/api/modes", { name, scope:p.querySelector(".newScope").value }).then(useStatus).then(() => renderPanel(false));
-  };
+  if (!dirty) { draft = JSON.parse(JSON.stringify(M.schedule.entries)); }
+  $("#schedOn").classList.toggle("on", M.schedule.enabled);
+  // week
+  const wk = JSON.stringify([draft, M.modes, minutesNow()]);
+  if ($("#week")._k !== wk) {
+    $("#week")._k = wk;
+    const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"], ti = todayIdx();
+    $("#week").innerHTML = draft.length ? DAYS.map((n, i) => `<b class="${i === ti ? "today" : ""}">${n}</b>${timeline(draft, i, i === ti ? minutesNow() : null)}`).join("")
+      : `<div style="grid-column:1/-1" class="help">No times yet: add one below.</div>`;
+  }
+  if (!dirty && $("#entries")._k !== JSON.stringify([draft, M.modes])) drawEntries();
+  // modes list
+  const mk = JSON.stringify([M.modes, roomsOf().map(r => r[0])]);
+  if ($("#mrows")._k !== mk) {
+    $("#mrows")._k = mk;
+    $("#newScope").innerHTML = scopeOptions("room:" + (roomsOf()[0]?.[0] || ""));
+    $("#mrows").innerHTML = M.modes.map(m => `<div class="mrow" data-id="${esc(m.id)}"><span class="sw" style="--mg:${modeGrad(m)}"></span><span class="nm">${esc(m.name)}</span>
+      <select class="in scope">${scopeOptions(m.scope || "all")}</select><button class="btn cap">Save current lights</button><button class="btn ghost del">Delete</button></div>`).join("");
+    $("#mrows").querySelectorAll(".mrow").forEach(row => {
+      const id = row.dataset.id;
+      $(".cap", row).onclick = () => post(`/api/modes/${encodeURIComponent(id)}/capture`, { scope:$(".scope", row).value }).then(() => toast(`Saved the lights into “${modeName(id)}”`));
+      const del = $(".del", row);
+      del.onclick = () => {
+        if (del.dataset.armed) return post(`/api/modes/${encodeURIComponent(id)}/delete`).then(() => toast(`Deleted “${modeName(id)}”`));
+        del.dataset.armed = 1; del.textContent = "Really delete?";
+        setTimeout(() => { delete del.dataset.armed; del.textContent = "Delete"; }, 3000);
+      };
+    });
+  }
+  const uk = JSON.stringify(M.modes.map(m => m.id));
+  if ($("#urls")._k !== uk) {
+    $("#urls")._k = uk;
+    const o = location.origin;
+    const rows = [[`${o}/api/mode/cycle?modes=${M.modes.slice(0, 3).map(m => m.id).join(",")}`, "Cycle through modes"],
+      [`${o}/api/mode/toggle/watching`, "Watching on, then back to what was on"],
+      ...M.modes.map(m => [`${o}/api/mode/${m.id}`, m.name]), [`${o}/api/mode/resume`, "Back to schedule"]];
+    $("#urls").innerHTML = rows.map(([u, l]) => `<div class="url"><code>${esc(u)}</code><span>${esc(l)}</span></div>`).join("");
+  }
+}
+function markDirty() { dirty = true; $("#saveSched").disabled = false; $("#week")._k = null; renderSchedule(); }
+function scopeOptions(cur) {
+  const opts = [["all", "All lights"], ...roomsOf().filter(([r]) => r).map(([r]) => ["room:" + r, r])];
+  return opts.map(([v, l]) => `<option value="${esc(v)}"${v === cur ? " selected" : ""}>${esc(l)}</option>`).join("");
+}
+function drawEntries() {
+  const box = $("#entries"), M = S.modes;
+  box._k = JSON.stringify([draft, M.modes]);
+  const order = draft.map((e, i) => i).sort((a, b) => draft[a].time.localeCompare(draft[b].time));
+  box.innerHTML = draft.length ? "" : `<div class="help" style="margin:0">No times yet.</div>`;
+  for (const idx of order) {
+    const e = draft[idx];
+    const row = document.createElement("div");
+    row.className = "entry";
+    row.innerHTML = `<input type="time" class="in" value="${esc(e.time)}"><select class="in" style="flex:1;min-width:130px">${M.modes.map(m => `<option value="${esc(m.id)}"${m.id === e.mode ? " selected" : ""}>${esc(m.name)}</option>`).join("")}</select>
+      <div class="days">${["M", "T", "W", "T", "F", "S", "S"].map((n, i) => `<button class="${e.days.includes(i) ? "on" : ""}" data-d="${i}">${n}</button>`).join("")}</div>
+      <button class="x" aria-label="Remove"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>`;
+    $("input", row).onchange = ev => { e.time = ev.target.value; markDirty(); };
+    $("select", row).onchange = ev => { e.mode = ev.target.value; markDirty(); };
+    row.querySelectorAll(".days button").forEach(b => b.onclick = () => {
+      const d = +b.dataset.d; e.days = e.days.includes(d) ? e.days.filter(x => x !== d) : [...e.days, d].sort(); b.classList.toggle("on"); markDirty();
+    });
+    $(".x", row).onclick = () => { draft.splice(idx, 1); markDirty(); drawEntries(); };
+    box.appendChild(row);
+  }
 }
 
-loadModes();
-setInterval(() => { if ($id("panel").hidden) loadModes(); else fetch("/api/modes").then(r => r.json()).then(s => { M = s; renderModeBar(); }); }, 4000);
+// ======================================================================= settings page
+function renderSettings() {
+  const main = $("#main");
+  if (!built.settings) {
+    built.settings = true;
+    main.innerHTML = `<div class="view">
+      <h1 class="page">Settings</h1><p class="sub" id="setSub"></p>
+      <div class="card"><div class="ch"><h2>Lights</h2><span class="sp"></span><button class="btn" id="scan">Scan for lights</button></div><div id="lrows"></div>
+        <p class="help"><b>Screen</b> is the part of your monitor a light follows in screen sync (Watching).
+        <b>Govee scenes</b> makes effects on that light use Govee's built-in animations instead of streaming.</p></div>
+      <div class="card"><div class="ch"><h2>About</h2></div><p class="help" style="margin:0"><a href="https://github.com/purzbeats/open-lights" style="color:inherit">open-lights</a> · local control for Govee lights, no cloud needed for lights with LAN Control.</p></div></div>`;
+    $("#scan").onclick = async e => {
+      const b = e.target; b.textContent = "Scanning…"; b.disabled = true;
+      try { await post("/api/scan"); toast("Scan done"); } catch { toast("Scan failed"); } finally { b.textContent = "Scan for lights"; b.disabled = false; }
+    };
+    const focus = decodeURIComponent(location.hash.split("/")[1] || "");
+    if (focus) setTimeout(() => { const r = document.querySelector(`.lrow[data-id="${CSS.escape(focus)}"]`); r?.scrollIntoView({ block:"center" }); r?.classList.add("flash"); }, 50);
+  }
+  const lan = S.devices.filter(d => d.via !== "cloud").length;
+  $("#setSub").textContent = `${S.devices.length} lights · ${lan} local · ${S.devices.length - lan} cloud · cloud API ${INFO.cloud ? "on" : "off"}`;
+  $("#roomlist").innerHTML = roomsOf().filter(([r]) => r).map(([r]) => `<option value="${esc(r)}">`).join("");
+  const box = $("#lrows");
+  const sorted = [...S.devices].sort((a, b) => (a.room || "~").localeCompare(b.room || "~") || (a.name || "").localeCompare(b.name || ""));
+  sorted.forEach((d, i) => {
+    let row = box.querySelector(`.lrow[data-id="${CSS.escape(d.id)}"]`);
+    if (!row) row = makeLightRow(d.id);
+    if (box.children[i] !== row) box.insertBefore(row, box.children[i] || null);
+    const c = glow(d), on = isOn(d);
+    const b = $(".bulb", row); b.style.background = on ? `rgb(${c})` : ""; b.style.boxShadow = on ? `0 0 16px rgba(${c},.5)` : "";
+    const zs = $(".zone", row);
+    if (!zs.options.length && ZONES.length) zs.innerHTML = ZONES.map(z => `<option value="${esc(z.id)}">Screen: ${esc(z.name)}</option>`).join("");
+    const setv = (sel, v) => { const el = $(sel, row); if (document.activeElement !== el) el.value = v; };
+    setv(".nm", d.name || d.id); setv(".rm", d.room || ""); setv(".zone", d.zone || "all");
+    $(".gm .switch", row).classList.toggle("on", !!d.govee_modes);
+    $(".meta", row).innerHTML = `<span class="badge ${d.via === "cloud" ? "cloud" : "lan"}">${d.via === "cloud" ? "Cloud" : "Local"}</span>${esc(d.sku || "")}${d.ip ? " · " + esc(d.ip) : ""}
+      · ${d.online ? (d.unconfirmed ? `<span style="color:var(--red)">not responding</span>` : "online") : "offline"}`;
+  });
+  [...box.children].forEach(r => { if (!S.devices.some(d => d.id === r.dataset.id)) r.remove(); });
+}
+function makeLightRow(id) {
+  const row = document.createElement("div");
+  row.className = "lrow"; row.dataset.id = id;
+  row.innerHTML = `<span class="bulb">${ICON_BULB}</span><input class="in nm" spellcheck="false" aria-label="Name"><input class="in rm" list="roomlist" placeholder="Room" spellcheck="false" aria-label="Room">
+    <select class="in zone" aria-label="Screen zone">${ZONES.map(z => `<option value="${esc(z.id)}">Screen: ${esc(z.name)}</option>`).join("")}</select>
+    <label class="gm"><button class="switch" aria-label="Govee scenes"></button>Govee scenes</label><div class="meta"></div>`;
+  const enter = e => { if (e.key === "Enter") e.target.blur(); };
+  $(".nm", row).onchange = e => act(id, { action:"rename", name:e.target.value }); $(".nm", row).onkeydown = enter;
+  $(".rm", row).onchange = e => act(id, { action:"room", room:e.target.value.trim() }); $(".rm", row).onkeydown = enter;
+  $(".zone", row).onchange = e => act(id, { action:"screen_zone", zone:e.target.value });
+  $(".gm .switch", row).onclick = e => { e.preventDefault(); const sw = e.currentTarget, on = !sw.classList.contains("on"); sw.classList.toggle("on", on); act(id, { action:"govee_modes", on }); };
+  return row;
+}
 
-refresh();
-setInterval(refresh, 2500);
+go();
+setInterval(() => { if (!document.hidden && S.modes && view !== "settings") render(); }, 30000);   // keeps the "now" marker moving
 </script>
 </body>
 </html>

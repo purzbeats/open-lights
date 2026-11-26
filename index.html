@@ -69,13 +69,14 @@
 
   .day { margin:22px 0 6px; }
   .tl { position:relative; display:flex; height:30px; border-radius:10px; overflow:hidden; background:var(--s1); border:1px solid var(--line); }
-  .tl span { height:100%; display:flex; align-items:center; padding:0 9px; font-size:12px; font-weight:600; white-space:nowrap; overflow:hidden; color:#fff; text-shadow:0 1px 2px #0008;
+  .tl span { height:100%; display:flex; align-items:center; padding:0 9px; font-size:12px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#fff; text-shadow:0 1px 2px #0008;
     border-right:1px solid #0b0c10aa; }
   .tl .now { position:absolute; top:-3px; bottom:-3px; width:2px; background:#fff; box-shadow:0 0 8px #fff; border-radius:2px; }
   .ticks { display:flex; justify-content:space-between; color:var(--dim2); font-size:11px; margin-top:5px; padding:0 1px; }
 
   .room { margin-top:34px; }
   .rhead { display:flex; align-items:center; gap:14px; margin-bottom:14px; flex-wrap:wrap; }
+  .rt { display:flex; align-items:baseline; gap:14px; min-width:0; }
   .rhead h2 { font-size:21px; margin:0; font-weight:700; letter-spacing:-.2px; }
   .rhead .rm { color:var(--dim); font-size:13.5px; }
   .rhead .sp { flex:1; }
@@ -286,8 +287,11 @@
     .hero h1 { font-size:28px; }
     .modes { grid-template-columns:1fr 1fr; gap:10px; }
     .mode { min-height:80px; padding:14px; }
+    .mode:last-child:nth-child(odd) { grid-column:1 / -1; min-height:64px; }
     .room { margin-top:28px; }
     .rhead { gap:10px; }
+    .rt { flex-direction:column; gap:0; }
+    .rt .rm { font-size:12.5px; }
     .rhead .slider { order:5; width:100%; height:44px; }
     .tiles { grid-template-columns:1fr 1fr; gap:10px; }
     .tile { flex-direction:column; align-items:flex-start; gap:10px; padding:14px; min-height:112px; }
@@ -297,8 +301,10 @@
     .grab { display:block; width:40px; height:5px; border-radius:5px; background:var(--line2); margin:10px auto 0; flex:none; }
     .grabzone { touch-action:none; }
     .shead { padding-top:10px; }
-    .lrow { grid-template-columns:34px 1fr 1fr; }
-    .lrow .gm { grid-column:2 / -1; }
+    .lrow { grid-template-columns:34px 1fr auto; gap:10px; }
+    .lrow .nm { grid-column:2 / -1; }
+    .lrow .rm { grid-column:2; }
+    .lrow .gm { grid-column:3; }
     .vt, .chip.arr, .map, .desk { display:none !important; }   /* room map and screen setup are desktop-only */
     .scr { grid-template-columns:1fr; }
     .scrl { flex-direction:row; flex-wrap:wrap; max-height:none; }
@@ -558,7 +564,8 @@ function modeGrad(m) {
 const modeSolid = m => modeColors(m)[0] || "#2a2d36";
 const when = iso => {
   const d = new Date(iso), t = d.toLocaleTimeString([], { hour:"numeric", minute:"2-digit" });
-  return d.toDateString() === new Date().toDateString() ? t : `${d.toLocaleDateString([], { weekday:"short" })} ${t}`;
+  const tmr = new Date(); tmr.setDate(tmr.getDate() + 1);
+  return d.toDateString() === new Date().toDateString() ? t : d.toDateString() === tmr.toDateString() ? `${t} tomorrow` : `${d.toLocaleDateString([], { weekday:"short" })} ${t}`;
 };
 function weekEvents(entries) {
   const ev = [];
@@ -584,7 +591,7 @@ function timeline(entries, day, now) {
   return `<div class="tl">${segs.map(s => {
     const w = (s.to - s.from) / 14.4, m = modeById(s.mode);
     const [r, g, b] = unhex(modeSolid(m)), light = (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.62;
-    return `<span style="width:${w}%;background:${modeGrad(m)}${light ? ";color:#1a1408;text-shadow:none" : ""}" title="${esc(modeName(s.mode))}">${w > 9 ? esc(modeName(s.mode)) : ""}</span>`;
+    return `<span style="width:${w}%;background:${modeGrad(m)}${light ? ";color:#1a1408;text-shadow:none" : ""}" title="${esc(modeName(s.mode))}">${w > (PHONE.matches ? 16 : 9) ? esc(modeName(s.mode)) : ""}</span>`;
   }).join("")}${now != null ? `<i class="now" style="left:${now / 14.4}%"></i>` : ""}</div>`;
 }
 const todayIdx = () => (new Date().getDay() + 6) % 7;
@@ -654,7 +661,7 @@ function renderHome() {
 function makeRoom(r) {
   const sec = document.createElement("section");
   sec.className = "room"; sec.id = "room-" + r; sec._room = r;
-  sec.innerHTML = `<div class="rhead"><h2>${esc(roomLabel(r))}</h2><span class="rm"></span><span class="sp"></span>
+  sec.innerHTML = `<div class="rhead"><div class="rt"><h2>${esc(roomLabel(r))}</h2><span class="rm"></span></div><span class="sp"></span>
     <div class="slider rsl"><div class="fill"></div><span class="lbl"></span></div>
     <button class="chip arr" hidden>Arrange</button>
     <div class="vt"><button data-m="tiles" aria-label="Tiles">${ICON_GRID}</button><button data-m="map" aria-label="Room map">${ICON_MAP}</button></div>
@@ -685,6 +692,8 @@ function updateRoom(sec, r, list) {
   $(".rpw", sec).classList.toggle("on", on.length > 0);
   const avg = on.length ? Math.round(on.reduce((a, d) => a + (d.status.brightness ?? 100), 0) / on.length) : 0;
   sec._sl.set(avg, on.length ? `${avg}%` : "Off");
+  const rc = on.length ? on.map(glow).reduce((a, b) => a.map((v, i) => v + b[i])).map(v => v / on.length) : null;
+  $(".rsl", sec).style.setProperty("--sc", rc ? `rgb(${rc.map(v => Math.round(v * 0.55 + 232 * 0.45))})` : "#3a3e4a");
   const mode = PHONE.matches ? "tiles" : localStorage.getItem("lights.view." + r) || (list.some(d => d.pos) ? "map" : "tiles");
   sec.querySelectorAll(".vt button").forEach(b => b.classList.toggle("on", b.dataset.m === mode));
   $(".arr", sec).hidden = mode !== "map";
